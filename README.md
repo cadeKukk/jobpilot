@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JobPilot
 
-## Getting Started
+An AI job-search copilot: track applications, generate tailored resumes and
+cover letters, and discover matching jobs with semantic search — with a human
+approving every send.
 
-First, run the development server:
+## Features
+
+- **Accounts & onboarding** — email/password auth (Better Auth), then an
+  onboarding flow that builds your profile from an uploaded resume PDF,
+  pasted text, and/or LinkedIn experience
+- **Application tracker** — pipeline from saved → applied → interviewing →
+  offer, with an activity timeline, notes, and contacts per application
+- **Resume & cover letter tailoring** *(phase 2)* — LLM-generated documents
+  tailored to each job description
+- **Job matching** — live postings pulled from job APIs (Remotive out of the
+  box, Adzuna with free keys), ranked against your resume — semantic
+  embedding scores with an OpenAI key, keyword scoring without — and saved
+  to the tracker in one click
+- **Email assistant** *(phase 4)* — drafts follow-ups and detects status
+  changes from recruiter emails, with one-click approval
+
+## Stack
+
+| Layer | Tech |
+| --- | --- |
+| Framework | Next.js (App Router) + TypeScript + Tailwind CSS |
+| Auth | Better Auth (email/password, session cookies) |
+| Database | Postgres + Drizzle ORM (embedded PGlite locally, Supabase/Neon in production) |
+| Parsing | unpdf for resume PDF text extraction |
+| AI | OpenAI (`gpt-5-mini` for generation, `text-embedding-3-small` + pgvector for matching) |
+
+## Getting started
 
 ```bash
+npm install
+cp .env.example .env   # then set BETTER_AUTH_SECRET (openssl rand -base64 32)
+npm run db:push        # create tables
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), create an account, and
+follow the onboarding flow. To add sample applications to your account, run
+`npm run db:seed` after signing up. No database setup is required locally —
+without a `DATABASE_URL`, the app uses an embedded Postgres (PGlite)
+persisted to `./.pglite`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To use a hosted Postgres instead, copy `.env.example` to `.env` and set
+`DATABASE_URL`, then re-run `npm run db:push`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Start the dev server |
+| `npm run db:push` | Apply the Drizzle schema to the database |
+| `npm run db:seed` | Seed sample applications |
+| `npm run db:studio` | Browse the database in Drizzle Studio |
 
-To learn more about Next.js, take a look at the following resources:
+## Roadmap
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [x] Phase 1 — Application tracker (CRUD, status pipeline, timeline, contacts)
+- [x] Auth & onboarding (accounts, resume upload/parse, LinkedIn import)
+- [x] Phase 3 — Job matching engine (Remotive/Adzuna ingestion, embedding or keyword ranking, save-to-tracker)
+- [ ] Phase 2 — Resume & cover letter tailoring (OpenAI structured outputs, PDF export)
+- [ ] Phase 4 — Email assistant (Gmail API, draft-only replies, auto status detection)
