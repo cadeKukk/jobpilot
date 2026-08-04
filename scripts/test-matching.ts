@@ -49,4 +49,9 @@ async function main() {
   console.log("Cleaned up test user.");
 }
 
-main().then(() => process.exit(0));
+main().then(async () => {
+  const client = (db as unknown as { $client?: { close?: () => Promise<void> } })
+    .$client;
+  await client?.close?.().catch(() => {});
+  process.exit(0);
+});

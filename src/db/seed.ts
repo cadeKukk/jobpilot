@@ -1,18 +1,90 @@
+// Seeds a demo account with sample data: run `npm run db:seed` (with the
+// dev server stopped — PGlite allows one process at a time).
+// Login: demo@jobpilot.app / demopass123
+try {
+  process.loadEnvFile();
+} catch {
+  // no .env file; fall back to defaults
+}
+
+import { eq } from "drizzle-orm";
 import { db } from "./index";
-import { applicationEvents, applications } from "./schema";
+import {
+  applicationEvents,
+  applications,
+  resumes,
+  userPreferences,
+  users,
+} from "./schema";
+
+const DEMO_EMAIL = "demo@jobpilot.app";
+const DEMO_PASSWORD = "demopass123";
+
+const DEMO_RESUME = `CADE DEMO
+Software Engineer | demo@jobpilot.app
+
+SUMMARY
+Full-stack engineer with 4 years of experience building web applications
+with React, TypeScript, Next.js, and Node.js. Comfortable across the stack:
+PostgreSQL schema design, REST/GraphQL APIs, CI/CD, and cloud deployment.
+
+EXPERIENCE
+Software Engineer — Acme Web Co (2022–present)
+- Built customer-facing dashboard in Next.js and TypeScript serving 40k users
+- Designed PostgreSQL schemas and Drizzle ORM data layer for new products
+- Cut page load times 45% via server components and query optimization
+
+Junior Developer — StartupXYZ (2020–2022)
+- Shipped React features weekly across a component library used by 3 teams
+- Wrote Node.js integrations with Stripe, SendGrid, and internal APIs
+
+SKILLS
+TypeScript, React, Next.js, Node.js, PostgreSQL, Tailwind CSS, Git, Docker`;
 
 async function seed() {
-  // Accounts are created through the app (Better Auth hashes passwords),
-  // so seeding attaches sample data to the first registered user.
-  const owner = await db.query.users.findFirst();
+  let owner = await db.query.users.findFirst({
+    where: eq(users.email, DEMO_EMAIL),
+  });
+
   if (!owner) {
-    console.log("No users found. Sign up in the app first, then re-run.");
-    return;
+    // Create through Better Auth so the password hash is real and loginable.
+    const { auth } = await import("../lib/auth");
+    await auth.api.signUpEmail({
+      body: { name: "Demo User", email: DEMO_EMAIL, password: DEMO_PASSWORD },
+    });
+    owner = await db.query.users.findFirst({
+      where: eq(users.email, DEMO_EMAIL),
+    });
+    console.log(`Created demo account: ${DEMO_EMAIL} / ${DEMO_PASSWORD}`);
+  }
+  if (!owner) throw new Error("Could not create demo user");
+
+  const hasResume = await db.query.resumes.findFirst({
+    where: eq(resumes.userId, owner.id),
+  });
+  if (!hasResume) {
+    await db.insert(resumes).values({
+      userId: owner.id,
+      title: "Master resume",
+      content: DEMO_RESUME,
+      isMaster: true,
+    });
+    await db
+      .insert(userPreferences)
+      .values({
+        userId: owner.id,
+        desiredRole: "software engineer",
+        location: "Remote",
+      })
+      .onConflictDoNothing();
+    console.log("Added demo master resume and preferences.");
   }
 
-  const existing = await db.query.applications.findFirst();
-  if (existing) {
-    console.log("Applications already exist, skipping seed.");
+  const hasApps = await db.query.applications.findFirst({
+    where: eq(applications.userId, owner.id),
+  });
+  if (hasApps) {
+    console.log("Demo applications already exist, skipping.");
     return;
   }
 
@@ -26,6 +98,8 @@ async function seed() {
       jobUrl: "https://vercel.com/careers",
       appliedAt: daysAgo(12),
       notes: "Phone screen went well. Technical interview scheduled.",
+      jobDescription:
+        "We're looking for a Frontend Engineer to build delightful, fast web experiences with React, Next.js, and TypeScript. You'll work on our dashboard, collaborate with design, and care deeply about performance and accessibility.",
     },
     {
       company: "Stripe",
@@ -35,6 +109,8 @@ async function seed() {
       status: "applied" as const,
       jobUrl: "https://stripe.com/jobs",
       appliedAt: daysAgo(5),
+      jobDescription:
+        "Build the economic infrastructure of the internet. We use Ruby, TypeScript, React, and distributed systems at scale. Strong API design skills and attention to reliability required.",
     },
     {
       company: "Supabase",
@@ -43,15 +119,8 @@ async function seed() {
       status: "saved" as const,
       jobUrl: "https://supabase.com/careers",
       notes: "Tailor resume toward Postgres experience before applying.",
-    },
-    {
-      company: "Datadog",
-      jobTitle: "Software Engineer II",
-      location: "Boston, MA",
-      salary: "$150k – $190k",
-      status: "rejected" as const,
-      appliedAt: daysAgo(30),
-      notes: "Rejected after take-home. Ask for feedback.",
+      jobDescription:
+        "Product Engineers at Supabase ship features end-to-end across our Postgres platform: dashboard UI in React/Next.js, APIs in TypeScript, and deep Postgres integrations.",
     },
     {
       company: "Linear",
@@ -94,9 +163,19 @@ function daysAgo(n: number) {
   return new Date(Date.now() - n * 24 * 60 * 60 * 1000);
 }
 
+async function closeDb() {
+  const client = (db as unknown as { $client?: { close?: () => Promise<void> } })
+    .$client;
+  await client?.close?.().catch(() => {});
+}
+
 seed()
-  .then(() => process.exit(0))
-  .catch((err) => {
+  .then(async () => {
+    await closeDb();
+    process.exit(0);
+  })
+  .catch(async (err) => {
     console.error(err);
+    await closeDb();
     process.exit(1);
   });

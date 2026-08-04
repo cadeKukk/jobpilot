@@ -15,6 +15,24 @@ function createDb() {
     return drizzlePg(pool, { schema });
   }
   const client = new PGlite("./.pglite");
+
+  // PGlite buffers writes in memory; a hard kill loses recent commits.
+  // Flush and close on shutdown signals so Ctrl+C never loses data.
+  let closing = false;
+  const close = (exitCode?: number) => {
+    if (closing) return;
+    closing = true;
+    client
+      .close()
+      .catch(() => {})
+      .finally(() => {
+        if (exitCode !== undefined) process.exit(exitCode);
+      });
+  };
+  process.once("SIGINT", () => close(0));
+  process.once("SIGTERM", () => close(0));
+  process.once("beforeExit", () => close());
+
   return drizzlePglite(client, { schema });
 }
 

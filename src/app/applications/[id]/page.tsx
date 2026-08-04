@@ -10,11 +10,18 @@ import {
   User,
 } from "lucide-react";
 import { db } from "@/db";
-import { applicationEvents, applications, contacts } from "@/db/schema";
+import {
+  applicationEvents,
+  applications,
+  contacts,
+  generatedDocuments,
+} from "@/db/schema";
 import { DeleteApplicationButton } from "@/components/delete-application-button";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusSelect } from "@/components/status-select";
+import { TailorDocuments } from "@/components/tailor-documents";
 import { addContact, addNote } from "@/lib/actions";
+import { getMasterResume } from "@/lib/resume";
 import { formatDate } from "@/lib/status";
 import { getCurrentUser } from "@/lib/user";
 
@@ -34,7 +41,7 @@ export default async function ApplicationDetailPage({
   });
   if (!app) notFound();
 
-  const [events, appContacts] = await Promise.all([
+  const [events, appContacts, docs, masterResume] = await Promise.all([
     db.query.applicationEvents.findMany({
       where: eq(applicationEvents.applicationId, id),
       orderBy: [desc(applicationEvents.occurredAt)],
@@ -43,7 +50,14 @@ export default async function ApplicationDetailPage({
       where: eq(contacts.applicationId, id),
       orderBy: [asc(contacts.createdAt)],
     }),
+    db.query.generatedDocuments.findMany({
+      where: eq(generatedDocuments.applicationId, id),
+      orderBy: [desc(generatedDocuments.createdAt)],
+    }),
+    getMasterResume(user.id),
   ]);
+
+  const openaiConfigured = !!process.env.OPENAI_API_KEY;
 
   return (
     <div className="space-y-6">
@@ -79,6 +93,37 @@ export default async function ApplicationDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          <Card title="AI-tailored documents">
+            {!openaiConfigured ? (
+              <p className="text-sm text-slate-500">
+                Add an <code className="rounded bg-slate-100 px-1">OPENAI_API_KEY</code>{" "}
+                to <code className="rounded bg-slate-100 px-1">.env</code> to
+                generate a resume and cover letter tailored to this job. See
+                the README for setup.
+              </p>
+            ) : !masterResume ? (
+              <p className="text-sm text-slate-500">
+                <Link
+                  href="/onboarding"
+                  className="text-blue-600 hover:underline"
+                >
+                  Add your master resume
+                </Link>{" "}
+                first — tailored documents are generated from it.
+              </p>
+            ) : (
+              <TailorDocuments
+                applicationId={app.id}
+                docs={docs.map((d) => ({
+                  id: d.id,
+                  kind: d.kind,
+                  content: d.content,
+                  createdAt: d.createdAt.toISOString(),
+                }))}
+              />
+            )}
+          </Card>
+
           {app.jobDescription && (
             <Card title="Job description">
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">

@@ -11,8 +11,10 @@ approving every send.
   pasted text, and/or LinkedIn experience
 - **Application tracker** — pipeline from saved → applied → interviewing →
   offer, with an activity timeline, notes, and contacts per application
-- **Resume & cover letter tailoring** *(phase 2)* — LLM-generated documents
-  tailored to each job description
+- **Resume & cover letter tailoring** — one click on any application
+  generates a resume and cover letter tailored to that job description from
+  your master resume (OpenAI `gpt-5-mini`, structured output, strict
+  no-fabrication prompt), with copy-to-clipboard and print-to-PDF
 - **Job matching** — live postings pulled from job APIs (Remotive out of the
   box, Adzuna with free keys), ranked against your resume — semantic
   embedding scores with an OpenAI key, keyword scoring without — and saved
@@ -39,11 +41,21 @@ npm run db:push        # create tables
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), create an account, and
-follow the onboarding flow. To add sample applications to your account, run
-`npm run db:seed` after signing up. No database setup is required locally —
-without a `DATABASE_URL`, the app uses an embedded Postgres (PGlite)
-persisted to `./.pglite`.
+Open [http://localhost:3000](http://localhost:3000) and create an account,
+or seed a ready-made demo account (`demo@jobpilot.app` / `demopass123`) with
+sample data by running `npm run db:seed` **while the dev server is stopped**.
+No database setup is required locally — without a `DATABASE_URL`, the app
+uses an embedded Postgres (PGlite) persisted to `./.pglite`. Note: PGlite
+allows only one process at a time, so stop the dev server before running
+seeds or migrations.
+
+### Optional API keys (in `.env`)
+
+| Key | Unlocks |
+| --- | --- |
+| `OPENAI_API_KEY` | Tailored resume/cover letter generation and semantic job-match scoring |
+| `OPENAI_MODEL` | Override the generation model (default `gpt-5-mini`) |
+| `ADZUNA_APP_ID` + `ADZUNA_APP_KEY` | On-site/local jobs in Find jobs (free at developer.adzuna.com) |
 
 To use a hosted Postgres instead, copy `.env.example` to `.env` and set
 `DATABASE_URL`, then re-run `npm run db:push`.
@@ -62,5 +74,5 @@ To use a hosted Postgres instead, copy `.env.example` to `.env` and set
 - [x] Phase 1 — Application tracker (CRUD, status pipeline, timeline, contacts)
 - [x] Auth & onboarding (accounts, resume upload/parse, LinkedIn import)
 - [x] Phase 3 — Job matching engine (Remotive/Adzuna ingestion, embedding or keyword ranking, save-to-tracker)
-- [ ] Phase 2 — Resume & cover letter tailoring (OpenAI structured outputs, PDF export)
+- [x] Phase 2 — Resume & cover letter tailoring (OpenAI structured outputs, print-to-PDF)
 - [ ] Phase 4 — Email assistant (Gmail API, draft-only replies, auto status detection)
