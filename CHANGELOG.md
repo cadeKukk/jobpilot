@@ -4,6 +4,18 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Fixed — Job auto-population and local database stability
+
+- The matches page now auto-populates even without a saved search: the
+  desired role is inferred from the master resume (e.g. "product designer")
+  and remembered as the user's preference.
+- Local dev database re-architected: PGlite now runs in a single dedicated
+  process behind the Postgres wire protocol (`scripts/db-server.ts`,
+  port 5433, multiplexed connections), fixing the corruption and
+  "Aborted()" crashes caused by multiple Next.js processes opening the
+  data directory directly. `npm run dev` starts both processes; migrations
+  and seeds now run any time, no server shutdown required.
+
 ### Added — Free AI provider support & job detail pages
 
 - Provider-agnostic AI layer (`AI_BASE_URL` / `AI_API_KEY` / `AI_MODEL` /

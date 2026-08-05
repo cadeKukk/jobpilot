@@ -43,11 +43,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) and create an account,
 or seed a ready-made demo account (`demo@jobpilot.app` / `demopass123`) with
-sample data by running `npm run db:seed` **while the dev server is stopped**.
-No database setup is required locally — without a `DATABASE_URL`, the app
-uses an embedded Postgres (PGlite) persisted to `./.pglite`. Note: PGlite
-allows only one process at a time, so stop the dev server before running
-seeds or migrations.
+sample data via `npm run db:seed`.
+
+No database setup is required locally: `npm run dev` starts an embedded
+Postgres (PGlite) as a dedicated process behind the Postgres wire protocol
+on `127.0.0.1:5433`, persisted to `./.pglite`. Migrations and seeds connect
+to it like any Postgres — run them any time. In production, set
+`DATABASE_URL` to a hosted Postgres (Supabase, Neon, etc.).
 
 ## AI setup
 

@@ -262,6 +262,50 @@ async function embeddingScores(
   return scores;
 }
 
+const ROLE_WORDS = [
+  "engineer",
+  "developer",
+  "designer",
+  "manager",
+  "analyst",
+  "scientist",
+  "architect",
+  "consultant",
+  "specialist",
+  "administrator",
+  "technician",
+  "accountant",
+  "marketer",
+  "recruiter",
+  "writer",
+  "nurse",
+  "teacher",
+];
+
+// Best-effort role guess from the top of a resume (e.g. "software engineer"),
+// so the matches page can auto-populate before the user saves a search.
+export function guessRoleFromResume(content: string): string | null {
+  const lines = content
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    for (const word of ROLE_WORDS) {
+      const idx = lower.indexOf(word);
+      if (idx === -1) continue;
+      const before = lower
+        .slice(0, idx)
+        .split(/[^a-z+#./-]+/)
+        .filter(Boolean);
+      return [...before.slice(-2), word].join(" ").trim();
+    }
+  }
+  return null;
+}
+
 // Skills/terms a job shares with the resume — shown on the job detail page
 // so users can see at a glance why something matches.
 export function sharedKeywords(resumeText: string, job: Job): string[] {

@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently -n db,web -c blue,green --kill-others \"npm:db:server\" \"next dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "db:server": "tsx scripts/db-server.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts"
@@ -23,11 +24,13 @@
     "unpdf": "^1.8.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite-socket": "^0.2.7",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/pg": "^8.20.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^10.0.4",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",

@@ -1,5 +1,5 @@
-// Seeds a demo account with sample data: run `npm run db:seed` (with the
-// dev server stopped — PGlite allows one process at a time).
+// Seeds a demo account with sample data: run `npm run db:seed` while the
+// dev database is running (`npm run dev` or `npm run db:server`).
 // Login: demo@jobpilot.app / demopass123
 try {
   process.loadEnvFile();
@@ -164,9 +164,10 @@ function daysAgo(n: number) {
 }
 
 async function closeDb() {
-  const client = (db as unknown as { $client?: { close?: () => Promise<void> } })
-    .$client;
-  await client?.close?.().catch(() => {});
+  const client = (
+    db as unknown as { $client?: { end?: () => Promise<void> } }
+  ).$client;
+  await client?.end?.().catch(() => {});
 }
 
 seed()

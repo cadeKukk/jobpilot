@@ -50,8 +50,9 @@ async function main() {
 }
 
 main().then(async () => {
-  const client = (db as unknown as { $client?: { close?: () => Promise<void> } })
-    .$client;
-  await client?.close?.().catch(() => {});
+  const client = (
+    db as unknown as { $client?: { end?: () => Promise<void> } }
+  ).$client;
+  await client?.end?.().catch(() => {});
   process.exit(0);
 });

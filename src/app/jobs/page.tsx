@@ -4,7 +4,11 @@ import { ExternalLink, MapPin, Search, Sparkles } from "lucide-react";
 import { db } from "@/db";
 import { applications, userPreferences, type Job } from "@/db/schema";
 import { SaveJobButton } from "@/components/save-job-button";
-import { searchAndIngestJobs, scoreJobsAgainstResume } from "@/lib/jobs";
+import {
+  guessRoleFromResume,
+  searchAndIngestJobs,
+  scoreJobsAgainstResume,
+} from "@/lib/jobs";
 import { getMasterResume } from "@/lib/resume";
 import { formatDate } from "@/lib/status";
 import { getCurrentUser } from "@/lib/user";
@@ -29,8 +33,26 @@ export default async function JobsPage({
     getMasterResume(user.id),
   ]);
 
-  const query = (q ?? prefs?.desiredRole ?? "").trim();
+  let query = (q ?? prefs?.desiredRole ?? "").trim();
   const location = (loc ?? prefs?.location ?? "").trim();
+
+  // No saved search yet? Derive one from the resume so matches populate
+  // automatically after onboarding, and remember it as the preference.
+  let guessedFromResume = false;
+  if (!query && masterResume) {
+    const guess = guessRoleFromResume(masterResume.content);
+    if (guess) {
+      query = guess;
+      guessedFromResume = true;
+      await db
+        .insert(userPreferences)
+        .values({ userId: user.id, desiredRole: guess, location: null })
+        .onConflictDoUpdate({
+          target: userPreferences.userId,
+          set: { desiredRole: guess, updatedAt: new Date() },
+        });
+    }
+  }
 
   // Remember the latest search so matches auto-populate next visit.
   if (q?.trim()) {
@@ -129,6 +151,13 @@ export default async function JobsPage({
           Search
         </button>
       </form>
+
+      {guessedFromResume && (
+        <p className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+          Showing matches for <strong>“{query}”</strong> based on your resume —
+          use the search box to refine, and we&apos;ll remember it.
+        </p>
+      )}
 
       {!masterResume && query && (
         <Link
