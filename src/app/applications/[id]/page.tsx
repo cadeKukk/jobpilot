@@ -96,10 +96,11 @@ export default async function ApplicationDetailPage({
           <Card title="AI-tailored documents">
             {!openaiConfigured ? (
               <p className="text-sm text-slate-500">
-                Add an <code className="rounded bg-slate-100 px-1">OPENAI_API_KEY</code>{" "}
-                to <code className="rounded bg-slate-100 px-1">.env</code> to
-                generate a resume and cover letter tailored to this job. See
-                the README for setup.
+                Add an AI API key to{" "}
+                <code className="rounded bg-slate-100 px-1">.env</code> to
+                generate a resume and cover letter tailored to this job.
+                Google&apos;s Gemini API works free of charge — see
+                &ldquo;AI setup&rdquo; in the README.
               </p>
             ) : !masterResume ? (
               <p className="text-sm text-slate-500">

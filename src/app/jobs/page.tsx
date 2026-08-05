@@ -144,7 +144,7 @@ export default async function JobsPage({
           <Sparkles className="h-3.5 w-3.5" />
           {method === "embeddings"
             ? "Ranked by AI semantic match between your resume and each posting."
-            : "Ranked by keyword overlap with your resume. Add an OPENAI_API_KEY for semantic AI matching."}
+            : "Ranked by keyword overlap with your resume. Add an AI key (free Gemini works — see README) for semantic matching."}
           {!adzunaConfigured &&
             " Showing remote roles (Remotive) — add free Adzuna API keys for on-site jobs too."}
         </p>
@@ -177,18 +177,22 @@ export default async function JobsPage({
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       {pct !== undefined && <MatchBadge pct={pct} />}
-                      {job.url ? (
+                      <Link
+                        href={`/jobs/${job.id}`}
+                        className="font-medium hover:underline"
+                      >
+                        {job.title}
+                      </Link>
+                      {job.url && (
                         <a
                           href={job.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 font-medium hover:underline"
+                          title="Open original posting"
+                          className="text-slate-400 transition hover:text-slate-700"
                         >
-                          {job.title}
-                          <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                          <ExternalLink className="h-3.5 w-3.5 shrink-0" />
                         </a>
-                      ) : (
-                        <span className="font-medium">{job.title}</span>
                       )}
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-slate-500">

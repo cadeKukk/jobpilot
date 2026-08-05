@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { jobs, resumes, type Job, type Resume } from "@/db/schema";
+import { embedTexts, getAIConfig } from "@/lib/ai";
 
 type RawJob = {
   source: string;
@@ -19,8 +20,14 @@ type RawJob = {
 const FETCH_TIMEOUT_MS = 12_000;
 const MAX_DESCRIPTION_CHARS = 6_000;
 
+// Converts posting HTML to readable plain text, preserving paragraph and
+// list structure so descriptions stay scannable in the UI.
 function stripHtml(html: string): string {
   return html
+    .replace(/<\/(p|div|h[1-6]|ul|ol|tr)>/gi, "\n\n")
+    .replace(/<br[^>]*>/gi, "\n")
+    .replace(/<\/li>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "- ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -28,7 +35,9 @@ function stripHtml(html: string): string {
     .replace(/&gt;/g, ">")
     .replace(/&#39;|&apos;/g, "'")
     .replace(/&quot;/g, '"')
-    .replace(/\s+/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/ ?\n ?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -167,28 +176,6 @@ export async function searchAndIngestJobs(
 
 // --- Match scoring ----------------------------------------------------------
 
-async function embedTexts(texts: string[]): Promise<number[][]> {
-  const res = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "text-embedding-3-small",
-      input: texts.map((t) => t.slice(0, 8_000)),
-    }),
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!res.ok) throw new Error(`OpenAI embeddings responded ${res.status}`);
-  const data = (await res.json()) as {
-    data: Array<{ index: number; embedding: number[] }>;
-  };
-  return data.data
-    .sort((a, b) => a.index - b.index)
-    .map((d) => d.embedding);
-}
-
 function cosine(a: number[], b: number[]): number {
   let dot = 0;
   let normA = 0;
@@ -233,20 +220,25 @@ async function embeddingScores(
   resume: Resume,
   jobList: Job[]
 ): Promise<Map<string, number>> {
-  let resumeEmbedding = resume.embedding;
-  if (!resumeEmbedding) {
-    [resumeEmbedding] = await embedTexts([resume.content]);
-    await db
-      .update(resumes)
-      .set({ embedding: resumeEmbedding })
-      .where(eq(resumes.id, resume.id));
-  }
+  const ai = getAIConfig();
+  if (!ai) throw new Error("No AI config");
 
-  const missing = jobList.filter((j) => !j.embedding);
+  // Always embed the resume fresh: if the provider or embedding model
+  // changed since last run, cached vectors would have mismatched dimensions.
+  const [resumeEmbedding] = await embedTexts(ai, [resume.content]);
+  await db
+    .update(resumes)
+    .set({ embedding: resumeEmbedding })
+    .where(eq(resumes.id, resume.id));
+
+  const missing = jobList.filter(
+    (j) => !j.embedding || j.embedding.length !== resumeEmbedding.length
+  );
   const BATCH = 64;
   for (let i = 0; i < missing.length; i += BATCH) {
     const batch = missing.slice(i, i + BATCH);
     const vectors = await embedTexts(
+      ai,
       batch.map((j) => `${j.title} at ${j.company}\n${j.description ?? ""}`)
     );
     await Promise.all(
@@ -270,6 +262,22 @@ async function embeddingScores(
   return scores;
 }
 
+// Skills/terms a job shares with the resume — shown on the job detail page
+// so users can see at a glance why something matches.
+export function sharedKeywords(resumeText: string, job: Job): string[] {
+  const resumeTerms = new Set(tokenize(resumeText));
+  const jobTerms = tokenize(`${job.title} ${job.description ?? ""}`);
+  const shared: string[] = [];
+  const seen = new Set<string>();
+  for (const term of jobTerms) {
+    if (term.length >= 4 && resumeTerms.has(term) && !seen.has(term)) {
+      seen.add(term);
+      shared.push(term);
+    }
+  }
+  return shared.slice(0, 14);
+}
+
 export type ScoringMethod = "embeddings" | "keywords";
 
 // Scores jobs against the resume: semantic embeddings when an OpenAI key is
@@ -282,7 +290,7 @@ export async function scoreJobsAgainstResume(
   let raw: Map<string, number>;
   let method: ScoringMethod = "keywords";
 
-  if (process.env.OPENAI_API_KEY) {
+  if (getAIConfig()) {
     try {
       raw = await embeddingScores(resume, jobList);
       method = "embeddings";

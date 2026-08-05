@@ -4,6 +4,21 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Free AI provider support & job detail pages
+
+- Provider-agnostic AI layer (`AI_BASE_URL` / `AI_API_KEY` / `AI_MODEL` /
+  `AI_EMBEDDING_MODEL`): works with OpenAI, Google Gemini's free tier
+  (recommended for demos — no credit card), Groq, OpenRouter, or local
+  Ollama. Structured-output requests fall back gracefully on providers
+  without `json_schema` support; embedding dimensions are guarded when
+  switching providers.
+- Every found job now has its own detail page: full formatted description,
+  "at a glance" panel (salary, location, posted date, source), the skills
+  it shares with your resume, save-to-tracker, and a link to the original
+  posting. Ingested descriptions now preserve paragraphs and bullets.
+- Clearer navigation: Dashboard / Find jobs / Profile links with active
+  states in the header.
+
 ### Added — AI document tailoring (phase 2)
 
 - "Tailor documents" on each application: generates a tailored resume and

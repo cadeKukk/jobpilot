@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
-import { Compass, Plus, Search, UserRound } from "lucide-react";
+import { Compass, Plus } from "lucide-react";
+import { NavLinks } from "@/components/nav-links";
 import { SignOutButton } from "@/components/sign-out-button";
 import { getOptionalUser } from "@/lib/user";
 import "./globals.css";
@@ -45,14 +46,8 @@ export default async function RootLayout({
             </Link>
 
             {user ? (
-              <div className="flex items-center gap-1.5">
-                <Link
-                  href="/jobs"
-                  className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-                >
-                  <Search className="h-4 w-4" />
-                  <span className="hidden sm:inline">Find jobs</span>
-                </Link>
+              <div className="flex items-center gap-2">
+                <NavLinks />
                 <Link
                   href="/applications/new"
                   className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700"
@@ -60,13 +55,6 @@ export default async function RootLayout({
                   <Plus className="h-4 w-4" />
                   <span className="hidden sm:inline">Add application</span>
                   <span className="sm:hidden">Add</span>
-                </Link>
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-                >
-                  <UserRound className="h-4 w-4" />
-                  <span className="hidden sm:inline">{user.name}</span>
                 </Link>
                 <SignOutButton />
               </div>

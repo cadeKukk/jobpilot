@@ -44,3 +44,17 @@ export function formatDate(date: Date | null | undefined) {
     year: "numeric",
   }).format(date);
 }
+
+export function formatJobSalary(job: {
+  salaryText: string | null;
+  salaryMin: number | null;
+  salaryMax: number | null;
+}): string | null {
+  if (job.salaryText) return job.salaryText;
+  if (job.salaryMin && job.salaryMax) {
+    const fmt = (n: number) =>
+      n >= 1000 ? `$${Math.round(n / 1000)}k` : `$${n}`;
+    return `${fmt(job.salaryMin)} – ${fmt(job.salaryMax)}`;
+  }
+  return null;
+}

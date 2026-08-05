@@ -4,21 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { applicationEvents, applications, jobs } from "@/db/schema";
+import { formatJobSalary } from "@/lib/status";
 import { getCurrentUser } from "@/lib/user";
-
-function formatSalary(job: {
-  salaryText: string | null;
-  salaryMin: number | null;
-  salaryMax: number | null;
-}): string | null {
-  if (job.salaryText) return job.salaryText;
-  if (job.salaryMin && job.salaryMax) {
-    const fmt = (n: number) =>
-      n >= 1000 ? `$${Math.round(n / 1000)}k` : `$${n}`;
-    return `${fmt(job.salaryMin)} – ${fmt(job.salaryMax)}`;
-  }
-  return null;
-}
 
 export async function saveJobToTracker(jobId: string) {
   const user = await getCurrentUser();
@@ -43,7 +30,7 @@ export async function saveJobToTracker(jobId: string) {
       jobTitle: job.title,
       jobUrl: job.url,
       location: job.location,
-      salary: formatSalary(job),
+      salary: formatJobSalary(job),
       jobDescription: job.description,
       status: "saved",
     })

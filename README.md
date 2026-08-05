@@ -49,12 +49,32 @@ uses an embedded Postgres (PGlite) persisted to `./.pglite`. Note: PGlite
 allows only one process at a time, so stop the dev server before running
 seeds or migrations.
 
-### Optional API keys (in `.env`)
+## AI setup
+
+The AI layer speaks the OpenAI-compatible API, so any provider works —
+including **Google Gemini's free tier** (no credit card, ~1,500 requests/day),
+which is plenty to demo document tailoring and semantic matching.
+
+**Free (Gemini):** grab a key at
+[aistudio.google.com/apikey](https://aistudio.google.com/apikey), then in `.env`:
+
+```bash
+AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+AI_API_KEY=your-gemini-key
+# defaults for this base URL: AI_MODEL=gemini-2.5-flash, AI_EMBEDDING_MODEL=gemini-embedding-001
+```
+
+**Paid (OpenAI):** just set `OPENAI_API_KEY` (defaults: `gpt-5-mini` +
+`text-embedding-3-small`). Groq, OpenRouter, or a local Ollama server work
+too via `AI_BASE_URL`/`AI_API_KEY`/`AI_MODEL`.
+
+Without any AI key the app still works: job matching falls back to keyword
+scoring and the tailoring card shows setup instructions.
+
+### Other optional keys (in `.env`)
 
 | Key | Unlocks |
 | --- | --- |
-| `OPENAI_API_KEY` | Tailored resume/cover letter generation and semantic job-match scoring |
-| `OPENAI_MODEL` | Override the generation model (default `gpt-5-mini`) |
 | `ADZUNA_APP_ID` + `ADZUNA_APP_KEY` | On-site/local jobs in Find jobs (free at developer.adzuna.com) |
 
 To use a hosted Postgres instead, copy `.env.example` to `.env` and set
