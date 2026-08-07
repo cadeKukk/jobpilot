@@ -7,6 +7,7 @@ import {
   applications,
   type ApplicationStatus,
 } from "@/db/schema";
+import { CompanyAvatar } from "@/components/company-avatar";
 import { StatusSelect } from "@/components/status-select";
 import { getMasterResume } from "@/lib/resume";
 import { formatDate, STATUS_META } from "@/lib/status";
@@ -48,7 +49,9 @@ export default async function DashboardPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Application tracker
+        </h1>
         <p className="mt-1 text-sm text-slate-500">
           Track every application in one place.
         </p>
@@ -72,10 +75,12 @@ export default async function DashboardPage({
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="rounded-xl border border-slate-200 bg-white p-4"
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
           >
             <p className="text-xs font-medium text-slate-500">{stat.label}</p>
-            <p className="mt-1 text-2xl font-semibold">{stat.value}</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
+              {stat.value}
+            </p>
           </div>
         ))}
       </div>
@@ -105,13 +110,13 @@ export default async function DashboardPage({
             <div className="mt-1 flex gap-2">
               <Link
                 href="/jobs"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
               >
                 Find jobs for me
               </Link>
               <Link
                 href="/applications/new"
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
               >
                 <Plus className="h-4 w-4" />
                 Add manually
@@ -124,33 +129,38 @@ export default async function DashboardPage({
           {visible.map((app) => (
             <li
               key={app.id}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:shadow-sm"
+              className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md"
             >
               <Link
                 href={`/applications/${app.id}`}
-                className="min-w-0 flex-1"
+                className="flex min-w-0 flex-1 items-center gap-3"
               >
-                <div className="flex items-center gap-2">
-                  <p className="truncate font-medium">{app.jobTitle}</p>
-                  {app.jobUrl && (
-                    <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                  )}
-                </div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-slate-500">
-                  <span className="font-medium text-slate-600">
-                    {app.company}
-                  </span>
-                  {app.location && (
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin className="h-3.5 w-3.5" />
-                      {app.location}
+                <CompanyAvatar name={app.company} />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-semibold text-slate-900">
+                      {app.jobTitle}
+                    </p>
+                    {app.jobUrl && (
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                    )}
+                  </div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-slate-500">
+                    <span className="font-medium text-slate-600">
+                      {app.company}
                     </span>
-                  )}
-                  {app.appliedAt && (
-                    <span className="hidden sm:inline">
-                      Applied {formatDate(app.appliedAt)}
-                    </span>
-                  )}
+                    {app.location && (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5" />
+                        {app.location}
+                      </span>
+                    )}
+                    {app.appliedAt && (
+                      <span className="hidden sm:inline">
+                        Applied {formatDate(app.appliedAt)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </Link>
               <StatusSelect applicationId={app.id} status={app.status} />
@@ -176,14 +186,16 @@ function FilterTab({
   return (
     <Link
       href={href}
-      className={`rounded-full border px-3 py-1 text-sm transition ${
+      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
         active
-          ? "border-slate-900 bg-slate-900 text-white"
-          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+          ? "border-emerald-600 bg-emerald-600 text-white"
+          : "border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
       }`}
     >
       {label}
-      <span className={active ? "ml-1.5 text-slate-300" : "ml-1.5 text-slate-400"}>
+      <span
+        className={active ? "ml-1.5 text-emerald-100" : "ml-1.5 text-slate-400"}
+      >
         {count}
       </span>
     </Link>

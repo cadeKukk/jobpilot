@@ -38,7 +38,7 @@ export default async function OnboardingPage() {
               type="file"
               name="resumeFile"
               accept="application/pdf"
-              className="block w-full cursor-pointer rounded-lg border border-slate-300 bg-white text-sm text-slate-500 file:mr-3 file:cursor-pointer file:rounded-l-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+              className="block w-full cursor-pointer rounded-lg border border-slate-300 bg-white text-sm text-slate-500 file:mr-3 file:cursor-pointer file:rounded-l-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
             />
           </label>
           <p className="text-center text-xs text-slate-400">— or —</p>
@@ -119,7 +119,7 @@ export default async function OnboardingPage() {
           </Link>
           <button
             type="submit"
-            className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
           >
             <Sparkles className="h-4 w-4" />
             Finish setup

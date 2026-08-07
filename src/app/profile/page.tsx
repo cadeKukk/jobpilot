@@ -63,7 +63,7 @@ export default async function ProfilePage() {
               </Link>
               <button
                 type="submit"
-                className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
               >
                 Save changes
               </button>
@@ -77,7 +77,7 @@ export default async function ProfilePage() {
             </p>
             <Link
               href="/onboarding"
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
             >
               Add your resume
             </Link>

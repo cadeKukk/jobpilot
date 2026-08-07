@@ -15,7 +15,7 @@ export function SaveJobButton({
 
   if (saved) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
+      <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
         <Check className="h-4 w-4" />
         In tracker
       </span>
@@ -27,7 +27,7 @@ export function SaveJobButton({
       type="button"
       disabled={isPending}
       onClick={() => startTransition(() => saveJobToTracker(jobId))}
-      className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-50"
     >
       <BookmarkPlus className="h-4 w-4" />
       {isPending ? "Saving…" : "Save"}

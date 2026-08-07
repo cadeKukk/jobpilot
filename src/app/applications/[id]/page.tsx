@@ -150,7 +150,7 @@ export default async function ApplicationDetailPage({
               />
               <button
                 type="submit"
-                className="shrink-0 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-700"
+                className="shrink-0 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
               >
                 <Plus className="h-4 w-4" />
               </button>

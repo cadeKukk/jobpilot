@@ -45,7 +45,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   return (
     <div className="mx-auto mt-12 w-full max-w-sm">
       <div className="mb-6 flex flex-col items-center gap-2 text-center">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">
+        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
           <Compass className="h-5 w-5" />
         </span>
         <h1 className="text-xl font-semibold">
@@ -106,7 +106,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50"
+          className="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:opacity-50"
         >
           {loading
             ? "Please wait…"

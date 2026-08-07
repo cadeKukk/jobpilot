@@ -46,7 +46,7 @@ export function TailorDocuments({
           type="button"
           onClick={generate}
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:opacity-50"
         >
           <Sparkles className="h-4 w-4" />
           {isPending

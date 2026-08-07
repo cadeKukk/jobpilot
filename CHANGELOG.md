@@ -4,6 +4,20 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Changed — Jobright-style UI redesign
+
+- New app shell: fixed left sidebar navigation on desktop, bottom tab bar
+  on mobile (Jobs / Tracker / Profile / Add), with the signed-in user and
+  sign-out anchored at the bottom of the sidebar.
+- Job matches redesigned as rich cards: company initial avatars, circular
+  match-score rings with tier labels (STRONG/GOOD/FAIR/LOW MATCH),
+  metadata chips (location, remote, salary, source, posted), and inline
+  "Apply now" / Save actions.
+- Job detail page: header card with company avatar and a prominent green
+  "Apply now" button; "Why you match" skills section.
+- Tracker rows now show company avatars; consistent emerald accent across
+  all primary buttons, tabs, and focus states.
+
 ### Fixed — Job auto-population and local database stability
 
 - The matches page now auto-populates even without a saved search: the

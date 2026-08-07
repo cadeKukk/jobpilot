@@ -21,6 +21,8 @@ approving every send.
   to the tracker in one click
 - **Email assistant** *(phase 4)* — drafts follow-ups and detects status
   changes from recruiter emails, with one-click approval
+- **Responsive UI** — sidebar navigation on desktop, bottom tabs on mobile,
+  circular match-score rings and rich job cards inspired by Jobright
 
 ## Stack
 
