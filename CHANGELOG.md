@@ -4,6 +4,23 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — JobPilot Autofill Chrome extension
+
+- New Manifest V3 extension in `extension/`: autofills job application
+  forms with the user's JobPilot profile (name, email, phone, LinkedIn,
+  GitHub, website, location, desired role, resume summary).
+- Popup shows the synced profile, the number of fillable fields detected
+  on the current page, and an "Autofill this page" action that works on
+  any site; known ATS pages (Greenhouse, Lever, Workday, Ashby, Workable,
+  SmartRecruiters, and more) get a floating "Autofill with JobPilot"
+  button. Filled fields flash green; existing answers are never
+  overwritten.
+- New app endpoint `GET /api/extension/profile` returns the profile using
+  the existing session cookie; phone/LinkedIn/GitHub/website and a summary
+  blurb are extracted from the master resume.
+- Extension icons are generated programmatically by
+  `scripts/make-extension-icons.ts` (no image dependencies).
+
 ### Changed — Jobright-style UI redesign
 
 - New app shell: fixed left sidebar navigation on desktop, bottom tab bar

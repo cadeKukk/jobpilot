@@ -23,6 +23,9 @@ approving every send.
   changes from recruiter emails, with one-click approval
 - **Responsive UI** — sidebar navigation on desktop, bottom tabs on mobile,
   circular match-score rings and rich job cards inspired by Jobright
+- **Chrome extension** — [JobPilot Autofill](extension/README.md) fills job
+  application forms on Greenhouse, Lever, Workday, Ashby, and more with your
+  profile and resume details, one click, right from the page
 
 ## Stack
 
