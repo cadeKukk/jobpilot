@@ -73,6 +73,28 @@
     };
   }
 
+  // Walk the document plus every open shadow root (SmartRecruiters and other
+  // Angular/web-component ATSes nest form fields several shadow roots deep,
+  // where document.querySelectorAll can't see them).
+  function collectRoots(root, out) {
+    out.push(root);
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+    let node = walker.nextNode();
+    while (node) {
+      if (node.shadowRoot) collectRoots(node.shadowRoot, out);
+      node = walker.nextNode();
+    }
+    return out;
+  }
+
+  function deepQueryAll(selector) {
+    const found = [];
+    for (const root of collectRoots(document, [])) {
+      found.push(...root.querySelectorAll(selector));
+    }
+    return found;
+  }
+
   function fieldText(el) {
     const parts = [
       el.name,
@@ -80,19 +102,41 @@
       el.placeholder,
       el.getAttribute("aria-label"),
       el.getAttribute("autocomplete"),
+      el.getAttribute("formcontrolname"),
+      el.getAttribute("data-test"),
     ];
-    if (el.id) {
-      const label = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
+    // Look labels up in the element's own root — inside a shadow tree,
+    // document.querySelector can't find them.
+    const rootNode = el.getRootNode();
+    if (el.id && rootNode.querySelector) {
+      const label = rootNode.querySelector(`label[for="${CSS.escape(el.id)}"]`);
       if (label) parts.push(label.textContent);
     }
     const wrapping = el.closest("label");
     if (wrapping) parts.push(wrapping.textContent);
     const labelledBy = el.getAttribute("aria-labelledby");
-    if (labelledBy) {
+    if (labelledBy && rootNode.getElementById) {
       labelledBy.split(/\s+/).forEach((id) => {
-        const node = document.getElementById(id);
+        const node = rootNode.getElementById(id);
         if (node) parts.push(node.textContent);
       });
+    }
+    // Climb through shadow boundaries: the custom-element hosts often carry
+    // the meaningful attributes (e.g. <sr-input formcontrolname="firstName">).
+    let root = rootNode;
+    let hops = 0;
+    while (root instanceof ShadowRoot && hops < 5) {
+      const host = root.host;
+      parts.push(
+        host.getAttribute("formcontrolname"),
+        host.getAttribute("name"),
+        host.getAttribute("label"),
+        host.getAttribute("aria-label"),
+        host.getAttribute("data-test"),
+        host.id
+      );
+      root = host.getRootNode();
+      hops++;
     }
     return parts.filter(Boolean).join(" ").slice(0, 300);
   }
@@ -128,11 +172,9 @@
   }
 
   function candidates() {
-    return [
-      ...document.querySelectorAll(
-        'input:not([type]), input[type="text"], input[type="email"], input[type="tel"], input[type="url"], textarea'
-      ),
-    ].filter(isFillable);
+    return deepQueryAll(
+      'input:not([type]), input[type="text"], input[type="email"], input[type="tel"], input[type="url"], textarea'
+    ).filter(isFillable);
   }
 
   // Set the value the way React expects (native setter + input event).
@@ -270,6 +312,18 @@
     clearTimeout(debounce);
     debounce = setTimeout(ensureFab, 800);
   }).observe(document.body, { childList: true, subtree: true });
+
+  // Mutations inside shadow roots don't reach the observer above — poll for
+  // a while after load so late-rendering shadow-DOM forms still get the FAB.
+  const rescan = setInterval(() => {
+    ensureFab();
+    if (fab) clearInterval(rescan);
+  }, 1500);
+  setTimeout(() => clearInterval(rescan), 45_000);
+
+  // Exposed for headless testing of the scanner.
+  window.__jobpilotScan = scan;
+  window.__jobpilotFill = fill;
 
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.type === "SCAN") {

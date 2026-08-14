@@ -4,6 +4,23 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Fixed — Autofill on SmartRecruiters (shadow DOM support)
+
+- SmartRecruiters (and other Angular/web-component ATSes) render form
+  fields inside multi-layered shadow DOM, invisible to
+  `document.querySelectorAll` — so the scanner found 0 fields and neither
+  the floating button nor the popup offered autofill.
+- The content script now walks every open shadow root recursively, looks
+  labels up in the field's own root, reads Angular `formcontrolname` from
+  both inputs and their wrapper components (climbing up to 5 shadow
+  boundaries), and polls briefly after load since shadow-root mutations
+  don't reach the top-level MutationObserver.
+- Verified with a headless-Chrome regression test
+  (`scripts/test-shadow-fixture.mjs`) replicating SmartRecruiters'
+  structure: 6/6 fields detected and filled through two shadow layers.
+  (SmartRecruiters serves a DataDome CAPTCHA to automated browsers, so the
+  live page can't be tested headlessly — real Chrome sessions are fine.)
+
 ### Added — Apply with tailored résumé → Chrome extension handoff
 
 - The tailoring workspace's apply button is now **APPLY WITH TAILORED
