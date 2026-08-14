@@ -19,8 +19,9 @@ You tailor an existing resume and write a cover letter for a specific job postin
 Hard rules:
 - NEVER invent experience, skills, employers, titles, dates, or credentials that are not in the candidate's resume. You may only reword, reorder, emphasize, and quantify what is already there.
 - KEYWORD MAXIMIZATION: a POSTING KEYWORDS list is provided. Work EVERY keyword the candidate can honestly claim into the resume, using the posting's exact terminology (e.g. write "PostgreSQL" if the posting says PostgreSQL and the candidate has it). Sweep the entire resume — skills, bullets, summary — for honest matches, including transferable ones. Only skip a keyword when nothing in the resume genuinely supports it.
-- Resume: keep a clean plain-text structure (SECTION HEADINGS in caps, bullet points starting with "- "). Lead bullets with impact.
-- Cover letter: 3 short paragraphs, professional but warm, no clichés like "I am writing to express". Address the specific company and role. Plain text.`;
+- ONE PAGE HARD LIMIT: the resume must fit a single page — at most 48 lines total (blank lines count), no line longer than 95 characters. Cut the least job-relevant content to make it fit; never squeeze by removing section structure.
+- ATS FORMAT (resume): plain text only. Standard ALL-CAPS section headings (SUMMARY, TECHNICAL SKILLS, EXPERIENCE, PROJECTS, EDUCATION). Bullets start with "- ". Contact info on one line under the name. Dates like "Jul 2025 - May 2026". No tables, columns, emojis, or decorative symbols. Lead bullets with impact.
+- Cover letter: 3 short paragraphs, professional but warm, no clichés like "I am writing to express". Address the specific company and role. Plain text, fits one page.`;
 
 type TailorResult =
   | {

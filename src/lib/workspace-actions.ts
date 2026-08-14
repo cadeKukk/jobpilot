@@ -67,7 +67,8 @@ const REVISE_RULES: Record<string, string> = {
 Hard rules:
 - NEVER invent experience, skills, employers, titles, dates, or credentials that are not in the candidate's BASE RESUME. You may add, remove, reorder, reword, emphasize, and quantify — but only from what's really there.
 - KEYWORD MAXIMIZATION: a POSTING KEYWORDS list is provided. Unless the instruction says otherwise, preserve existing keyword coverage and work in any still-missing keywords the candidate can honestly claim, using the posting's exact terminology.
-- Keep clean plain-text structure: SECTION HEADINGS in caps, bullets starting with "- ".`,
+- ONE PAGE HARD LIMIT: at most 48 lines total (blank lines count), no line longer than 95 characters. Cut the least job-relevant content to fit.
+- ATS FORMAT: plain text, ALL-CAPS section headings (SUMMARY, TECHNICAL SKILLS, EXPERIENCE, PROJECTS, EDUCATION), bullets starting with "- ", no tables, columns, emojis, or decorative symbols.`,
   cover_letter: `You are revising a cover letter for a specific job application.
 Hard rules:
 - NEVER invent experience or credentials not in the candidate's BASE RESUME.

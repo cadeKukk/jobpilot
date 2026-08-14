@@ -4,6 +4,24 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Changed — ATS-compatible, guaranteed one-page output
+
+- **One page, always**: document content auto-fits a single Letter page —
+  a client-side fit (`OnePageFit`) measures the content and shrinks the
+  type from 11px down to an 8px floor until it fits; the PDF render waits
+  for the fit to settle, so preview and file stay identical. Verified: the
+  previously 2-page Playtech résumé now renders as one complete page.
+- **Generation-side budget**: tailoring and revision prompts enforce a
+  48-line / 95-char-per-line hard limit and instruct Fable to cut the
+  least job-relevant content rather than squeeze, so fresh drafts render
+  at full size without shrinking.
+- **ATS format**: documents render in Arial plain text; prompts mandate
+  standard ALL-CAPS headings (SUMMARY, TECHNICAL SKILLS, EXPERIENCE,
+  PROJECTS, EDUCATION), "- " bullets, single-line contact info, and no
+  tables/columns/emojis. The résumé paper no longer carries a date line
+  (parser noise); cover letters keep theirs (standard letter format).
+  Text-layer extraction verified with unpdf: all sections parse cleanly.
+
 ### Added — One-click PDF downloads with a true-to-output preview
 
 - New `GET /api/documents/[id]/pdf`: headless Chrome renders the document

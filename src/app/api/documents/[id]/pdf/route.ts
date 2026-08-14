@@ -36,6 +36,10 @@ export async function GET(
       waitUntil: "networkidle0",
       timeout: 30_000,
     });
+    // Wait for the one-page auto-fit to settle so the PDF gets the final size.
+    await page
+      .waitForSelector('[data-fitted="true"]', { timeout: 5_000 })
+      .catch(() => {});
     pdf = await page.pdf({
       format: "letter",
       printBackground: true,
