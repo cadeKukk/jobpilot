@@ -29,6 +29,12 @@ master resume.
 - **Profile source** — `GET /api/extension/profile` in the app returns
   your contact details (phone/LinkedIn/GitHub/website are extracted from
   your master resume) using your existing session cookie.
+- **Save this job** — the popup's **Save this job to JobPilot** button
+  reads the posting off the current page (JSON-LD `JobPosting` structured
+  data first — most ATS pages embed it — falling back to meta tags,
+  headings, and visible text) and `POST`s it to `/api/extension/capture`.
+  The job lands in the Find Jobs feed (source "extension", deduped by URL)
+  with the full analyze → apply → tailor flow available.
 - **Tailored handoff** — clicking **APPLY WITH TAILORED RÉSUMÉ** in a
   tailoring workspace snapshots the current drafts, marks that application
   as the active handoff, and opens the apply page. For the next 12 hours,

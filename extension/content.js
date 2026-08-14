@@ -325,9 +325,116 @@
   window.__jobpilotScan = scan;
   window.__jobpilotFill = fill;
 
+  // ---- Job capture: read the posting off the current page ----
+
+  function jsonLdJobPosting() {
+    for (const script of document.querySelectorAll(
+      'script[type="application/ld+json"]'
+    )) {
+      try {
+        const data = JSON.parse(script.textContent);
+        // JobPosting may be the root, an array entry, or inside @graph.
+        const nodes = Array.isArray(data) ? data : [data, ...(data["@graph"] ?? [])];
+        for (const node of nodes) {
+          const type = node?.["@type"];
+          if (type === "JobPosting" || (Array.isArray(type) && type.includes("JobPosting")))
+            return node;
+        }
+      } catch {
+        // malformed JSON-LD — keep looking
+      }
+    }
+    return null;
+  }
+
+  function jsonLdLocation(posting) {
+    const locs = [].concat(posting.jobLocation ?? []);
+    const parts = [];
+    for (const loc of locs) {
+      const a = loc?.address ?? loc;
+      const piece = [a?.addressLocality, a?.addressRegion, a?.addressCountry?.name ?? a?.addressCountry]
+        .filter((v) => typeof v === "string" && v.trim())
+        .join(", ");
+      if (piece) parts.push(piece);
+    }
+    return parts.join(" · ") || null;
+  }
+
+  function jsonLdSalary(posting) {
+    const s = posting.baseSalary;
+    if (!s) return null;
+    const v = s.value ?? s;
+    const currency = s.currency ?? "";
+    const range =
+      v?.minValue && v?.maxValue
+        ? `${v.minValue}–${v.maxValue}`
+        : (v?.value ?? v?.minValue ?? v?.maxValue);
+    if (!range) return null;
+    return `${range} ${currency}${v?.unitText ? ` / ${String(v.unitText).toLowerCase()}` : ""}`.trim();
+  }
+
+  function meta(name) {
+    const el =
+      document.querySelector(`meta[property="${name}"]`) ??
+      document.querySelector(`meta[name="${name}"]`);
+    return el?.content?.trim() || null;
+  }
+
+  // Page text including open shadow roots (SR-style pages render everything
+  // in components, leaving document.body.innerText nearly empty).
+  function deepText() {
+    let text = document.body.innerText ?? "";
+    if (text.length < 400) {
+      for (const root of collectRoots(document, [])) {
+        if (root instanceof ShadowRoot) text += "\n" + (root.host.innerText ?? "");
+      }
+    }
+    return text.replace(/\n{3,}/g, "\n\n").slice(0, 25_000);
+  }
+
+  function extractJob() {
+    const posting = jsonLdJobPosting();
+    if (posting) {
+      return {
+        title: posting.title ?? posting.name ?? null,
+        company: posting.hiringOrganization?.name ?? null,
+        location: jsonLdLocation(posting),
+        description: posting.description ?? null, // HTML — stripped server-side
+        salaryText: jsonLdSalary(posting),
+        postedAt: posting.datePosted ?? null,
+        url: location.href,
+        via: "json-ld",
+      };
+    }
+
+    // Fallback: meta tags + headings + visible text.
+    const ogTitle = meta("og:title") ?? document.title;
+    // "Job Title - Company" / "Job Title at Company" / "Job Title | Company"
+    const split = ogTitle?.split(/\s+[-–|·]\s+|\s+at\s+/);
+    const h1 = document.querySelector("h1")?.textContent?.trim();
+    return {
+      title: h1 || split?.[0]?.trim() || null,
+      company:
+        meta("og:site_name") ??
+        (split && split.length > 1 ? split[split.length - 1].trim() : null),
+      location: null,
+      description: meta("og:description")
+        ? `${meta("og:description")}\n\n${deepText()}`
+        : deepText(),
+      salaryText: null,
+      postedAt: null,
+      url: location.href,
+      via: "fallback",
+    };
+  }
+
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.type === "SCAN") {
       sendResponse({ count: scan() });
+      return false;
+    }
+    if (msg.type === "EXTRACT_JOB") {
+      sendResponse({ job: extractJob() });
       return false;
     }
     if (msg.type === "FILL") {

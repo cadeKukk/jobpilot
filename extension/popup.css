@@ -197,6 +197,17 @@ button.secondary:hover {
   min-height: 16px;
 }
 
+.capture-link {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--mid);
+}
+
+.capture-link:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+
 footer {
   padding: 10px 16px;
   border-top: 1px solid var(--ink);

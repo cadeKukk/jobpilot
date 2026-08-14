@@ -116,6 +116,7 @@ function renderReady(profile, syncedAt, fieldCount, active) {
     el(
       `<button class="primary" id="fill" ${fieldCount ? "" : "disabled"}>Autofill this page</button>`
     ),
+    el(`<button class="secondary" id="capture">Save this job to JobPilot</button>`),
     el(`<div class="result" id="result"></div>`),
     el(`<button class="secondary" id="sync">Re-sync profile</button>`),
     el(
@@ -137,6 +138,39 @@ function renderReady(profile, syncedAt, fieldCount, active) {
           : "No empty matching fields found.";
     } catch {
       result.textContent = "Couldn't autofill this page.";
+    }
+  });
+
+  document.getElementById("capture").addEventListener("click", async (e) => {
+    const btn = e.target;
+    const result = document.getElementById("result");
+    btn.textContent = "Reading page…";
+    btn.disabled = true;
+    try {
+      const tab = await getActiveTab();
+      const { job } = await messageTab(tab.id, { type: "EXTRACT_JOB" });
+      if (!job?.title || !job?.company) {
+        throw new Error("Couldn't read a job posting from this page.");
+      }
+      const res = await fetch(`${APP_URL}/api/extension/capture`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(job),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Save failed (${res.status})`);
+      result.replaceChildren(
+        el(
+          `<a class="capture-link" href="${APP_URL}/jobs/${data.jobId}" target="_blank" rel="noopener">${
+            data.existed ? "Already in JobPilot" : "Saved"
+          } — ${job.title.slice(0, 40)} · open →</a>`
+        )
+      );
+      btn.textContent = data.existed ? "Already saved ✓" : "Saved to JobPilot ✓";
+    } catch (err) {
+      result.textContent = err.message;
+      btn.textContent = "Save this job to JobPilot";
+      btn.disabled = false;
     }
   });
 

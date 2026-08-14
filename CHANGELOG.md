@@ -4,6 +4,23 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Capture jobs from any page via the extension
+
+- Extension v0.3.0: a **Save this job to JobPilot** button in the popup
+  reads the posting from the current page and adds it to the Find Jobs
+  feed. Extraction prefers JSON-LD `JobPosting` structured data (title,
+  company, location, salary, posted date, full description — most ATS
+  pages embed it), falling back to og: meta tags, the page's h1/title
+  split, and visible text (shadow-DOM aware).
+- New `POST /api/extension/capture` stores the job with source
+  "extension", strips description HTML server-side, and dedupes by URL —
+  re-saving the same posting returns the existing job.
+- After saving, the popup links straight to the job in JobPilot, where the
+  usual Fable fit analysis and APPLY → tailoring workspace flow applies.
+- Verified end-to-end with headless Chrome running the real content script
+  against JSON-LD and fallback-only fixture pages: extraction, capture,
+  dedupe, and job-page render all pass.
+
 ### Fixed — Autofill on SmartRecruiters (shadow DOM support)
 
 - SmartRecruiters (and other Angular/web-component ATSes) render form

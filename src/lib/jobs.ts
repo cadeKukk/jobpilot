@@ -22,7 +22,7 @@ const MAX_DESCRIPTION_CHARS = 6_000;
 
 // Converts posting HTML to readable plain text, preserving paragraph and
 // list structure so descriptions stay scannable in the UI.
-function stripHtml(html: string): string {
+export function stripHtml(html: string): string {
   return html
     .replace(/<\/(p|div|h[1-6]|ul|ol|tr)>/gi, "\n\n")
     .replace(/<br[^>]*>/gi, "\n")
