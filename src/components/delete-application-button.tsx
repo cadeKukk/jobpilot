@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { Trash2 } from "lucide-react";
 import { deleteApplication } from "@/lib/actions";
 
 export function DeleteApplicationButton({
@@ -20,10 +19,9 @@ export function DeleteApplicationButton({
           startTransition(() => deleteApplication(applicationId));
         }
       }}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-700 transition hover:bg-rose-100 disabled:opacity-50"
+      className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950 hover:line-through disabled:opacity-40"
     >
-      <Trash2 className="h-4 w-4" />
-      {isPending ? "Deleting…" : "Delete application"}
+      {isPending ? "DELETING…" : "DELETE APPLICATION ×"}
     </button>
   );
 }

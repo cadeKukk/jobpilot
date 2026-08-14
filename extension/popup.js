@@ -138,7 +138,7 @@ async function init() {
       ({ profile, syncedAt } = await syncProfile());
     } catch (err) {
       renderSignedOut(
-        `${err.message} <br /><br />Sign in to JobPilot, then reopen this popup.`
+        `${err.message} <br /><br />Make sure JobPilot is running (npm run dev), then reopen this popup.`
       );
       return;
     }

@@ -1,81 +1,77 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { APPLICATION_STATUSES } from "@/db/schema";
+import {
+  MonoLabel,
+  SectionMark,
+  btnSolid,
+  inputBase,
+  textareaBase,
+} from "@/components/editorial";
 import { createApplication } from "@/lib/actions";
 import { STATUS_META } from "@/lib/status";
 
-const inputClass =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
-
 export default function NewApplicationPage() {
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
+    <div className="mx-auto max-w-2xl space-y-8">
+      <div className="space-y-2">
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-900"
+          className="font-mono text-[11px] tracking-[0.18em] text-neutral-400 transition hover:text-neutral-950"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to dashboard
+          ← BACK TO TRACKER
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold">Add application</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Save a job you&apos;re interested in or one you&apos;ve already
-          applied to.
-        </p>
+        <SectionMark text="SEC. 02 — NEW ENTRY" />
+        <h1 className="text-3xl font-bold tracking-tight">Add application.</h1>
       </div>
 
-      <form
-        action={createApplication}
-        className="space-y-4 rounded-xl border border-slate-200 bg-white p-6"
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Company" required>
+      <form action={createApplication} className="space-y-6 border-t border-neutral-950 pt-6">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="COMPANY *">
             <input
               name="company"
               required
               placeholder="Acme Inc."
-              className={inputClass}
+              className={inputBase}
             />
           </Field>
-          <Field label="Job title" required>
+          <Field label="JOB TITLE *">
             <input
               name="jobTitle"
               required
               placeholder="Software Engineer"
-              className={inputClass}
+              className={inputBase}
             />
           </Field>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Location">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="LOCATION">
             <input
               name="location"
-              placeholder="Remote, New York, NY…"
-              className={inputClass}
+              placeholder="Remote, Tallinn…"
+              className={inputBase}
             />
           </Field>
-          <Field label="Salary range">
+          <Field label="SALARY RANGE">
             <input
               name="salary"
-              placeholder="$120k – $150k"
-              className={inputClass}
+              placeholder="$90k – $120k"
+              className={inputBase}
             />
           </Field>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Job posting URL">
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="JOB POSTING URL">
             <input
               name="jobUrl"
               type="url"
               placeholder="https://…"
-              className={inputClass}
+              className={inputBase}
             />
           </Field>
-          <Field label="Status">
-            <select name="status" defaultValue="saved" className={inputClass}>
+          <Field label="STATUS">
+            <select name="status" defaultValue="saved" className={inputBase}>
               {APPLICATION_STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {STATUS_META[s].label}
@@ -85,36 +81,33 @@ export default function NewApplicationPage() {
           </Field>
         </div>
 
-        <Field label="Job description">
+        <Field label="JOB DESCRIPTION">
           <textarea
             name="jobDescription"
             rows={5}
-            placeholder="Paste the job description here — it powers resume tailoring later."
-            className={inputClass}
+            placeholder="Paste the job description here — it powers résumé tailoring."
+            className={textareaBase}
           />
         </Field>
 
-        <Field label="Notes">
+        <Field label="NOTES">
           <textarea
             name="notes"
             rows={3}
             placeholder="Referrals, deadlines, first impressions…"
-            className={inputClass}
+            className={textareaBase}
           />
         </Field>
 
-        <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+        <div className="flex items-center justify-between border-t border-neutral-950 pt-6">
           <Link
             href="/"
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+            className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
           >
-            Cancel
+            CANCEL
           </Link>
-          <button
-            type="submit"
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-          >
-            Save application
+          <button type="submit" className={btnSolid}>
+            SAVE APPLICATION →
           </button>
         </div>
       </form>
@@ -124,19 +117,14 @@ export default function NewApplicationPage() {
 
 function Field({
   label,
-  required,
   children,
 }: {
   label: string;
-  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <label className="block space-y-1.5">
-      <span className="text-sm font-medium text-slate-700">
-        {label}
-        {required && <span className="text-rose-500"> *</span>}
-      </span>
+    <label className="block space-y-1">
+      <MonoLabel>{label}</MonoLabel>
       {children}
     </label>
   );

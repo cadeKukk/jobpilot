@@ -4,6 +4,35 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Changed — Personal single-user build: Cursor SDK AI, Estonia sources, editorial redesign
+
+- **Single-user mode**: removed Better Auth entirely (login/signup pages,
+  sessions/accounts/verifications tables, auth API routes). `getCurrentUser()`
+  now returns an auto-created "owner" row (`OWNER_NAME`/`OWNER_EMAIL` env
+  overrides). The extension profile API no longer requires a session.
+- **Cursor SDK AI layer** (`src/lib/cursor-ai.ts`): all generation — fit
+  analysis, résumé/cover-letter tailoring, Pilot chat — now runs one-shot
+  local Cursor agents on Anthropic **Fable 5** with `CURSOR_API_KEY`. The
+  model ID is resolved from the account's model list at runtime
+  (`CURSOR_MODEL` override). Replaced the OpenAI-compatible layer and
+  embeddings entirely; `@cursor/sdk` is in `serverExternalPackages`.
+- **Matching overhaul**: multi-query retrieval (search phrases editable on
+  the Profile page, every source queried with each) across Remotive, **cv.ee
+  (Estonia — keyless)**, **Arbeitnow (EU — keyless)**, and Adzuna. New
+  **Fable 5 fit analysis**: absolute 0–100 score, one-line verdict,
+  strengths, and gaps per job, batch-analyzed (5 per prompt) on demand and
+  cached on the job row (`fit_*` columns). Ranking: analyzed jobs by fit
+  score, the rest by keyword overlap. New Estonia feed filter.
+- **Editorial monochrome redesign** matching cadekukk.vercel.app: bracketed
+  section markers (`[ SEC. 01 — JOB MATCHES ]`), uppercase mono metadata
+  rows (`LOC — TALLINN · FIT — 84/100`), numbered list entries, hairline
+  rules, square corners, black-on-paper palette. Removed match rings,
+  company avatars, sidebar/bottom-tab shell (now a single editorial top
+  nav), and all emerald/slate accents. Shared primitives in
+  `src/components/editorial.tsx`; extension popup restyled to match.
+- Seed script now just creates the owner; removed the demo account and the
+  `test-matching` script.
+
 ### Added — Pilot copilot, match breakdown, insider connections, feed tabs
 
 - **Pilot** (`/pilot`): an Orion-style 24/7 AI career-coach chat grounded

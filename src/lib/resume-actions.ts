@@ -59,20 +59,25 @@ export async function saveMasterResume(formData: FormData) {
   const desiredRole = formData.get("desiredRole");
   const location = formData.get("location");
   if (typeof desiredRole === "string" && desiredRole.trim()) {
+    const role = desiredRole.trim();
+    // Seed the multi-query search list; refine it later on the Profile page.
+    const queries = [...new Set([role, "software engineer", "AI engineer"])];
     await db
       .insert(userPreferences)
       .values({
         userId: user.id,
-        desiredRole: desiredRole.trim(),
+        desiredRole: role,
         location: typeof location === "string" ? location.trim() || null : null,
+        searchQueries: queries,
         updatedAt: new Date(),
       })
       .onConflictDoUpdate({
         target: userPreferences.userId,
         set: {
-          desiredRole: desiredRole.trim(),
+          desiredRole: role,
           location:
             typeof location === "string" ? location.trim() || null : null,
+          searchQueries: queries,
           updatedAt: new Date(),
         },
       });
@@ -80,10 +85,7 @@ export async function saveMasterResume(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/profile");
-  // Straight into auto-populated matches when we know what they want.
-  redirect(
-    typeof desiredRole === "string" && desiredRole.trim() ? "/jobs" : "/"
-  );
+  redirect("/jobs");
 }
 
 export async function updateMasterResume(formData: FormData) {

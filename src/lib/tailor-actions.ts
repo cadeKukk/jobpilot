@@ -8,7 +8,7 @@ import {
   applications,
   generatedDocuments,
 } from "@/db/schema";
-import { chatJSON, getAIConfig } from "@/lib/ai";
+import { cursorEnabled, currentModelLabel, generateJSON } from "@/lib/cursor-ai";
 import { getMasterResume } from "@/lib/resume";
 import { getCurrentUser } from "@/lib/user";
 
@@ -30,9 +30,11 @@ export async function generateTailoredDocuments(
 ): Promise<TailorResult> {
   const user = await getCurrentUser();
 
-  const ai = getAIConfig();
-  if (!ai) {
-    return { ok: false, error: "No AI API key configured. See the README." };
+  if (!cursorEnabled()) {
+    return {
+      ok: false,
+      error: "CURSOR_API_KEY is not set — add it to .env (see README).",
+    };
   }
 
   const app = await db.query.applications.findFirst({
@@ -61,38 +63,21 @@ export async function generateTailoredDocuments(
 
   let parsed: { tailored_resume: string; cover_letter: string };
   try {
-    parsed = await chatJSON(ai, {
-      system: SYSTEM_PROMPT,
-      user: `Candidate's master resume:\n\n${resume.content.slice(0, 16_000)}\n\n---\n\nTarget job:\n\n${jobInfo}\n\nProduce the tailored resume and cover letter.`,
-      schema: {
-        name: "tailored_documents",
-        schema: {
-          type: "object",
-          properties: {
-            tailored_resume: {
-              type: "string",
-              description: "Complete tailored resume as plain text",
-            },
-            cover_letter: {
-              type: "string",
-              description: "Complete cover letter as plain text",
-            },
-          },
-          required: ["tailored_resume", "cover_letter"],
-          additionalProperties: false,
-        },
-      },
-    });
+    parsed = await generateJSON(
+      SYSTEM_PROMPT,
+      `Candidate's master resume:\n\n${resume.content.slice(0, 16_000)}\n\n---\n\nTarget job:\n\n${jobInfo}\n\nProduce the tailored resume and cover letter.`,
+      `{"tailored_resume": "<complete tailored resume as plain text>", "cover_letter": "<complete cover letter as plain text>"}`
+    );
   } catch (err) {
     console.error("Tailoring error:", err);
     return {
       ok: false,
       error:
-        "Generation failed or timed out. Check your AI key and model in .env, then try again.",
+        "Generation failed or timed out. Check CURSOR_API_KEY in .env, then try again.",
     };
   }
 
-  const model = ai.model;
+  const model = await currentModelLabel();
 
   await db.insert(generatedDocuments).values([
     {

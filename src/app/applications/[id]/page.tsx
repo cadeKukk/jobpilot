@@ -1,14 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, desc, eq } from "drizzle-orm";
-import {
-  ArrowLeft,
-  ArrowRight,
-  ExternalLink,
-  MessageSquare,
-  Plus,
-  User,
-} from "lucide-react";
 import { db } from "@/db";
 import {
   applicationEvents,
@@ -17,16 +9,15 @@ import {
   generatedDocuments,
 } from "@/db/schema";
 import { DeleteApplicationButton } from "@/components/delete-application-button";
+import { MonoLabel, SectionMark, btnOutline, inputBase } from "@/components/editorial";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusSelect } from "@/components/status-select";
 import { TailorDocuments } from "@/components/tailor-documents";
 import { addContact, addNote } from "@/lib/actions";
+import { cursorEnabled } from "@/lib/cursor-ai";
 import { getMasterResume } from "@/lib/resume";
 import { formatDate } from "@/lib/status";
 import { getCurrentUser } from "@/lib/user";
-
-const inputClass =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
 
 export default async function ApplicationDetailPage({
   params,
@@ -57,58 +48,66 @@ export default async function ApplicationDetailPage({
     getMasterResume(user.id),
   ]);
 
-  const openaiConfigured = !!process.env.OPENAI_API_KEY;
+  const aiEnabled = cursorEnabled();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Link
         href="/"
-        className="inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-900"
+        className="font-mono text-[11px] tracking-[0.18em] text-neutral-400 transition hover:text-neutral-950"
       >
-        <ArrowLeft className="h-4 w-4" />
-        Back to dashboard
+        ← BACK TO TRACKER
       </Link>
 
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{app.jobTitle}</h1>
-          <p className="mt-1 flex flex-wrap items-center gap-x-3 text-slate-600">
-            <span className="font-medium">{app.company}</span>
-            {app.location && <span>{app.location}</span>}
-            {app.jobUrl && (
-              <a
-                href={app.jobUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
-              >
-                View posting
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            )}
-          </p>
+      <div className="space-y-3 border-b border-neutral-950 pb-6">
+        <SectionMark text="SEC. 02 — APPLICATION" />
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h1 className="text-3xl font-bold tracking-tight">
+              {app.jobTitle}
+            </h1>
+            <p className="mt-1 text-lg text-neutral-600">{app.company}</p>
+            <p className="mt-2 font-mono text-[10px] tracking-[0.16em] text-neutral-400">
+              {[
+                app.location && `LOC — ${app.location.toUpperCase()}`,
+                app.salary && `SAL — ${app.salary.toUpperCase()}`,
+                `ADDED — ${formatDate(app.createdAt).toUpperCase()}`,
+              ]
+                .filter(Boolean)
+                .join("  ·  ")}
+            </p>
+          </div>
+          <StatusSelect applicationId={app.id} status={app.status} />
         </div>
-        <StatusSelect applicationId={app.id} status={app.status} />
+        {app.jobUrl && (
+          <a
+            href={app.jobUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
+          >
+            VIEW ORIGINAL POSTING ↗
+          </a>
+        )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <Card title="AI-tailored documents">
-            {!openaiConfigured ? (
-              <p className="text-sm text-slate-500">
-                Add an AI API key to{" "}
-                <code className="rounded bg-slate-100 px-1">.env</code> to
-                generate a resume and cover letter tailored to this job.
-                Google&apos;s Gemini API works free of charge — see
-                &ldquo;AI setup&rdquo; in the README.
+      <div className="grid gap-10 lg:grid-cols-3">
+        <div className="space-y-8 lg:col-span-2">
+          <section className="space-y-4">
+            <SectionMark text="TAILORED DOCUMENTS — FABLE 5" />
+            {!aiEnabled ? (
+              <p className="text-sm text-neutral-500">
+                Set <code className="bg-neutral-200 px-1">CURSOR_API_KEY</code>{" "}
+                in .env to generate a résumé and cover letter tailored to this
+                job.
               </p>
             ) : !masterResume ? (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-neutral-500">
                 <Link
                   href="/onboarding"
-                  className="text-blue-600 hover:underline"
+                  className="underline decoration-2 underline-offset-2"
                 >
-                  Add your master resume
+                  Add your base résumé
                 </Link>{" "}
                 first — tailored documents are generated from it.
               </p>
@@ -123,148 +122,129 @@ export default async function ApplicationDetailPage({
                 }))}
               />
             )}
-          </Card>
+          </section>
 
           {app.jobDescription && (
-            <Card title="Job description">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+            <section className="space-y-4 border-t border-neutral-200 pt-6">
+              <SectionMark text="JOB DESCRIPTION" />
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">
                 {app.jobDescription}
               </p>
-            </Card>
+            </section>
           )}
 
           {app.notes && (
-            <Card title="Notes">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+            <section className="space-y-4 border-t border-neutral-200 pt-6">
+              <SectionMark text="NOTES" />
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">
                 {app.notes}
               </p>
-            </Card>
+            </section>
           )}
 
-          <Card title="Activity">
-            <form action={addNote.bind(null, app.id)} className="mb-4 flex gap-2">
+          <section className="space-y-4 border-t border-neutral-200 pt-6">
+            <SectionMark text="ACTIVITY LOG" />
+            <form action={addNote.bind(null, app.id)} className="flex gap-3">
               <input
                 name="note"
                 placeholder="Add a note — interview scheduled, follow-up sent…"
-                className={inputClass}
+                className={inputBase}
               />
-              <button
-                type="submit"
-                className="shrink-0 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-              >
-                <Plus className="h-4 w-4" />
+              <button type="submit" className={btnOutline}>
+                ADD +
               </button>
             </form>
 
-            <ul className="space-y-4">
+            <ol className="border-t border-neutral-200">
               {events.map((event) => (
-                <li key={event.id} className="flex gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                    <MessageSquare className="h-3 w-3" />
+                <li
+                  key={event.id}
+                  className="flex items-baseline gap-4 border-b border-neutral-200 py-3"
+                >
+                  <span className="w-24 shrink-0 font-mono text-[10px] tracking-[0.14em] text-neutral-400">
+                    {formatDate(event.occurredAt).toUpperCase()}
                   </span>
-                  <div className="min-w-0">
-                    {event.type === "status_change" &&
-                    event.fromStatus &&
-                    event.toStatus ? (
-                      <div className="flex flex-wrap items-center gap-1.5 text-sm">
-                        <StatusBadge status={event.fromStatus} />
-                        <ArrowRight className="h-3.5 w-3.5 text-slate-400" />
-                        <StatusBadge status={event.toStatus} />
-                      </div>
-                    ) : (
-                      <p className="text-sm text-slate-700">{event.note}</p>
-                    )}
-                    <p className="mt-0.5 text-xs text-slate-400">
-                      {formatDate(event.occurredAt)}
-                    </p>
-                  </div>
+                  {event.type === "status_change" &&
+                  event.fromStatus &&
+                  event.toStatus ? (
+                    <span className="flex flex-wrap items-center gap-2 text-sm">
+                      <StatusBadge status={event.fromStatus} />
+                      <span className="text-neutral-400">→</span>
+                      <StatusBadge status={event.toStatus} />
+                    </span>
+                  ) : (
+                    <p className="text-sm text-neutral-700">{event.note}</p>
+                  )}
                 </li>
               ))}
-            </ul>
-          </Card>
+            </ol>
+          </section>
         </div>
 
-        <div className="space-y-6">
-          <Card title="Details">
-            <dl className="space-y-3 text-sm">
-              <DetailRow label="Salary" value={app.salary ?? "—"} />
-              <DetailRow label="Applied" value={formatDate(app.appliedAt)} />
-              <DetailRow label="Added" value={formatDate(app.createdAt)} />
-              <DetailRow label="Last updated" value={formatDate(app.updatedAt)} />
+        <div className="space-y-8">
+          <section className="space-y-3 border border-neutral-950 p-5">
+            <SectionMark text="DETAILS" />
+            <dl className="space-y-2.5">
+              <DetailRow label="SALARY" value={app.salary ?? "—"} />
+              <DetailRow label="APPLIED" value={formatDate(app.appliedAt)} />
+              <DetailRow label="ADDED" value={formatDate(app.createdAt)} />
+              <DetailRow label="UPDATED" value={formatDate(app.updatedAt)} />
             </dl>
-          </Card>
+          </section>
 
-          <Card title="Contacts">
+          <section className="space-y-4">
+            <SectionMark text="CONTACTS" />
             {appContacts.length > 0 && (
-              <ul className="mb-4 space-y-3">
+              <ul className="space-y-3">
                 {appContacts.map((contact) => (
-                  <li key={contact.id} className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-                      <User className="h-3 w-3" />
-                    </span>
-                    <div className="min-w-0 text-sm">
-                      <p className="font-medium">{contact.name}</p>
-                      <p className="text-slate-500">
-                        {[contact.role, contact.email]
-                          .filter(Boolean)
-                          .join(" · ") || "—"}
-                      </p>
-                    </div>
+                  <li key={contact.id} className="text-sm">
+                    <p className="font-semibold">{contact.name}</p>
+                    <p className="font-mono text-[10px] tracking-[0.14em] text-neutral-400">
+                      {[contact.role, contact.email]
+                        .filter(Boolean)
+                        .join("  ·  ")
+                        .toUpperCase() || "—"}
+                    </p>
                   </li>
                 ))}
               </ul>
             )}
-            <form action={addContact.bind(null, app.id)} className="space-y-2">
-              <input name="name" placeholder="Name" className={inputClass} />
+            <form action={addContact.bind(null, app.id)} className="space-y-3">
+              <input name="name" placeholder="Name" className={inputBase} />
               <input
                 name="role"
                 placeholder="Role (recruiter, hiring manager…)"
-                className={inputClass}
+                className={inputBase}
               />
               <input
                 name="email"
                 type="email"
                 placeholder="Email"
-                className={inputClass}
+                className={inputBase}
               />
-              <button
-                type="submit"
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-              >
-                Add contact
+              <button type="submit" className={btnOutline}>
+                ADD CONTACT +
               </button>
             </form>
-          </Card>
+          </section>
 
-          <Card title="Danger zone">
+          <section className="space-y-3 border-t border-neutral-200 pt-6">
+            <MonoLabel>DANGER ZONE</MonoLabel>
             <DeleteApplicationButton applicationId={app.id} />
-          </Card>
+          </section>
         </div>
       </div>
     </div>
   );
 }
 
-function Card({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5">
-      <h2 className="mb-3 text-sm font-semibold text-slate-900">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="text-right font-medium text-slate-700">{value}</dd>
+    <div className="flex items-baseline justify-between gap-3">
+      <dt className="font-mono text-[10px] tracking-[0.16em] text-neutral-400">
+        {label}
+      </dt>
+      <dd className="text-right text-sm font-medium">{value}</dd>
     </div>
   );
 }

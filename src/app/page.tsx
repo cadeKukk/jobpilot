@@ -1,19 +1,18 @@
 import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
-import { Briefcase, ExternalLink, MapPin, Plus } from "lucide-react";
 import { db } from "@/db";
 import {
   APPLICATION_STATUSES,
   applications,
   type ApplicationStatus,
 } from "@/db/schema";
-import { CompanyAvatar } from "@/components/company-avatar";
+import { MonoLabel, SectionMark, btnOutline, btnSolid } from "@/components/editorial";
 import { StatusSelect } from "@/components/status-select";
 import { getMasterResume } from "@/lib/resume";
 import { formatDate, STATUS_META } from "@/lib/status";
 import { getCurrentUser } from "@/lib/user";
 
-export default async function DashboardPage({
+export default async function TrackerPage({
   searchParams,
 }: {
   searchParams: Promise<{ status?: string }>;
@@ -40,164 +39,136 @@ export default async function DashboardPage({
     allApps.filter((a) => a.status === s).length;
 
   const stats = [
-    { label: "Total applications", value: allApps.length },
-    { label: "Active", value: count("applied") + count("interviewing") },
-    { label: "Interviewing", value: count("interviewing") },
-    { label: "Offers", value: count("offer") },
+    { label: "TOTAL", value: allApps.length },
+    { label: "ACTIVE", value: count("applied") + count("interviewing") },
+    { label: "INTERVIEWING", value: count("interviewing") },
+    { label: "OFFERS", value: count("offer") },
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">
-          Application tracker
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Track every application in one place.
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <SectionMark text="SEC. 02 — APPLICATION TRACKER" />
+        <h1 className="text-3xl font-bold tracking-tight">Tracker.</h1>
+        <p className="text-sm text-neutral-500">
+          Every application, from saved to signed.
         </p>
       </div>
 
       {!masterResume && (
         <Link
           href="/onboarding"
-          className="block rounded-xl border border-blue-200 bg-blue-50 p-4 transition hover:border-blue-300"
+          className="block border border-neutral-950 bg-white p-4 text-sm transition hover:bg-neutral-950 hover:text-white"
         >
-          <p className="text-sm font-medium text-blue-900">
-            Finish setting up your profile
-          </p>
-          <p className="mt-0.5 text-sm text-blue-700">
-            Add your resume to unlock tailored documents and job matching.
-          </p>
+          <span className="font-mono text-[10px] tracking-[0.18em]">
+            [ SETUP REQUIRED ]
+          </span>{" "}
+          Add your base résumé to unlock tailoring and fit analysis →
         </Link>
       )}
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px border border-neutral-950 bg-neutral-950 sm:grid-cols-4">
         {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-          >
-            <p className="text-xs font-medium text-slate-500">{stat.label}</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">
+          <div key={stat.label} className="bg-[#fafaf8] p-4">
+            <p className="text-3xl font-bold tabular-nums tracking-tight">
               {stat.value}
             </p>
+            <MonoLabel>{stat.label}</MonoLabel>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <FilterTab href="/" label="All" count={allApps.length} active={!filter} />
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-neutral-950 py-3">
+        <FilterLink href="/" active={!filter}>
+          ALL — {allApps.length}
+        </FilterLink>
         {APPLICATION_STATUSES.map((s) => (
-          <FilterTab
-            key={s}
-            href={`/?status=${s}`}
-            label={STATUS_META[s].label}
-            count={count(s)}
-            active={filter === s}
-          />
+          <FilterLink key={s} href={`/?status=${s}`} active={filter === s}>
+            {STATUS_META[s].label.toUpperCase()} — {count(s)}
+          </FilterLink>
         ))}
       </div>
 
       {visible.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-white py-16 text-center">
-          <Briefcase className="h-8 w-8 text-slate-300" />
-          <p className="text-sm text-slate-500">
+        <div className="space-y-4 border border-dashed border-neutral-300 py-16 text-center">
+          <p className="text-sm text-neutral-400">
             {filter
               ? `No ${STATUS_META[filter].label.toLowerCase()} applications.`
-              : "No applications yet. Add your first one to get started."}
+              : "Nothing tracked yet."}
           </p>
           {!filter && (
-            <div className="mt-1 flex gap-2">
-              <Link
-                href="/jobs"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-              >
-                Find jobs for me
+            <div className="flex justify-center gap-3">
+              <Link href="/jobs" className={btnSolid}>
+                FIND MATCHES →
               </Link>
-              <Link
-                href="/applications/new"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
-              >
-                <Plus className="h-4 w-4" />
-                Add manually
+              <Link href="/applications/new" className={btnOutline}>
+                ADD MANUALLY +
               </Link>
             </div>
           )}
         </div>
       ) : (
-        <ul className="space-y-2">
-          {visible.map((app) => (
+        <ol className="border-t border-neutral-950">
+          {visible.map((app, i) => (
             <li
               key={app.id}
-              className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-emerald-200 hover:shadow-md"
+              className="flex items-center gap-4 border-b border-neutral-200 py-4 transition hover:bg-white"
             >
-              <Link
-                href={`/applications/${app.id}`}
-                className="flex min-w-0 flex-1 items-center gap-3"
-              >
-                <CompanyAvatar name={app.company} />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate font-semibold text-slate-900">
-                      {app.jobTitle}
-                    </p>
-                    {app.jobUrl && (
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                    )}
-                  </div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm text-slate-500">
-                    <span className="font-medium text-slate-600">
-                      {app.company}
-                    </span>
-                    {app.location && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {app.location}
-                      </span>
-                    )}
-                    {app.appliedAt && (
-                      <span className="hidden sm:inline">
-                        Applied {formatDate(app.appliedAt)}
-                      </span>
-                    )}
-                  </div>
-                </div>
+              <span className="hidden w-14 shrink-0 font-mono text-[10px] tracking-[0.18em] text-neutral-400 sm:block">
+                [ {String(i + 1).padStart(2, "0")} ]
+              </span>
+              <Link href={`/applications/${app.id}`} className="min-w-0 flex-1">
+                <p className="truncate font-semibold tracking-tight hover:underline decoration-2 underline-offset-4">
+                  {app.jobTitle}
+                </p>
+                <p className="mt-0.5 font-mono text-[10px] tracking-[0.16em] text-neutral-400">
+                  {[
+                    app.company.toUpperCase(),
+                    app.location && `LOC — ${app.location.toUpperCase()}`,
+                    app.appliedAt &&
+                      `APPLIED — ${formatDate(app.appliedAt).toUpperCase()}`,
+                  ]
+                    .filter(Boolean)
+                    .join("  ·  ")}
+                </p>
               </Link>
               <StatusSelect applicationId={app.id} status={app.status} />
             </li>
           ))}
-        </ul>
+        </ol>
       )}
+
+      <div className="flex justify-end">
+        <Link
+          href="/applications/new"
+          className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
+        >
+          ADD APPLICATION +
+        </Link>
+      </div>
     </div>
   );
 }
 
-function FilterTab({
+function FilterLink({
   href,
-  label,
-  count,
   active,
+  children,
 }: {
   href: string;
-  label: string;
-  count: number;
   active: boolean;
+  children: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
-      className={`rounded-full border px-3.5 py-1.5 text-sm font-medium transition ${
+      className={`font-mono text-[11px] tracking-[0.18em] transition ${
         active
-          ? "border-emerald-600 bg-emerald-600 text-white"
-          : "border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
+          ? "bg-neutral-950 px-2 py-1 text-white"
+          : "text-neutral-400 hover:text-neutral-950"
       }`}
     >
-      {label}
-      <span
-        className={active ? "ml-1.5 text-emerald-100" : "ml-1.5 text-slate-400"}
-      >
-        {count}
-      </span>
+      {children}
     </Link>
   );
 }

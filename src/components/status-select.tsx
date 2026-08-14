@@ -23,7 +23,7 @@ export function StatusSelect({
         startTransition(() => updateApplicationStatus(applicationId, next));
       }}
       onClick={(e) => e.stopPropagation()}
-      className={`cursor-pointer rounded-lg border px-2 py-1 text-xs font-medium outline-none transition disabled:opacity-50 ${STATUS_META[status].badge}`}
+      className={`cursor-pointer border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.14em] outline-none transition disabled:opacity-50 ${STATUS_META[status].badge}`}
       aria-label="Application status"
     >
       {APPLICATION_STATUSES.map((s) => (

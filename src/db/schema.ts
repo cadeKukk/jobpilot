@@ -26,70 +26,11 @@ export const applicationStatus = pgEnum(
   APPLICATION_STATUSES
 );
 
-// users/sessions/accounts/verifications are managed by Better Auth, which
-// generates its own text IDs — hence text PKs instead of uuid here.
+// Single-user app: one "owner" row, created automatically on first access.
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified").notNull().default(false),
-  image: text("image"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
-export const sessions = pgTable("sessions", {
-  id: text("id").primaryKey(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  token: text("token").notNull().unique(),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
-export const accounts = pgTable("accounts", {
-  id: text("id").primaryKey(),
-  accountId: text("account_id").notNull(),
-  providerId: text("provider_id").notNull(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  accessToken: text("access_token"),
-  refreshToken: text("refresh_token"),
-  idToken: text("id_token"),
-  accessTokenExpiresAt: timestamp("access_token_expires_at", {
-    withTimezone: true,
-  }),
-  refreshTokenExpiresAt: timestamp("refresh_token_expires_at", {
-    withTimezone: true,
-  }),
-  scope: text("scope"),
-  password: text("password"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
-export const verifications = pgTable("verifications", {
-  id: text("id").primaryKey(),
-  identifier: text("identifier").notNull(),
-  value: text("value").notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -107,10 +48,6 @@ export const resumes = pgTable("resumes", {
   title: text("title").notNull(),
   content: text("content").notNull(),
   isMaster: boolean("is_master").notNull().default(false),
-  // OpenAI embedding cached as JSON. Stored as jsonb so it works on the
-  // embedded PGlite database too; swap to a pgvector column on hosted
-  // Postgres when job volume outgrows in-process scoring.
-  embedding: jsonb("embedding").$type<number[]>(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -123,17 +60,19 @@ export const userPreferences = pgTable("user_preferences", {
     .references(() => users.id, { onDelete: "cascade" }),
   desiredRole: text("desired_role"),
   location: text("location"),
+  // One search phrase per entry — every provider is queried with each.
+  searchQueries: jsonb("search_queries").$type<string[]>(),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });
 
-// Job postings pulled from external APIs (Remotive, Adzuna).
+// Job postings pulled from external APIs (Remotive, Adzuna, Arbeitnow, cv.ee).
 export const jobs = pgTable(
   "jobs",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    source: text("source").notNull(), // "remotive" | "adzuna" | "manual"
+    source: text("source").notNull(), // "remotive" | "adzuna" | "arbeitnow" | "cvee" | "manual"
     externalId: text("external_id"),
     title: text("title").notNull(),
     company: text("company").notNull(),
@@ -143,8 +82,13 @@ export const jobs = pgTable(
     salaryMin: integer("salary_min"),
     salaryMax: integer("salary_max"),
     salaryText: text("salary_text"),
-    embedding: jsonb("embedding").$type<number[]>(),
     postedAt: timestamp("posted_at", { withTimezone: true }),
+    // Fable 5 fit analysis, cached per job (single-user app).
+    fitScore: integer("fit_score"),
+    fitVerdict: text("fit_verdict"),
+    fitStrengths: jsonb("fit_strengths").$type<string[]>(),
+    fitGaps: jsonb("fit_gaps").$type<string[]>(),
+    fitAnalyzedAt: timestamp("fit_analyzed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

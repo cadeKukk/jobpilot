@@ -1,38 +1,39 @@
 import type { ApplicationStatus } from "@/db/schema";
 
+// Monochrome status treatment: weight and fill carry the hierarchy.
 export const STATUS_META: Record<
   ApplicationStatus,
   { label: string; badge: string; dot: string }
 > = {
   saved: {
     label: "Saved",
-    badge: "bg-slate-100 text-slate-700 border-slate-200",
-    dot: "bg-slate-400",
+    badge: "border-neutral-300 bg-transparent text-neutral-500",
+    dot: "bg-neutral-400",
   },
   applied: {
     label: "Applied",
-    badge: "bg-blue-50 text-blue-700 border-blue-200",
-    dot: "bg-blue-500",
+    badge: "border-neutral-950 bg-transparent text-neutral-950",
+    dot: "bg-neutral-950",
   },
   interviewing: {
     label: "Interviewing",
-    badge: "bg-amber-50 text-amber-700 border-amber-200",
-    dot: "bg-amber-500",
+    badge: "border-neutral-950 bg-neutral-200 text-neutral-950",
+    dot: "bg-neutral-950",
   },
   offer: {
     label: "Offer",
-    badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    dot: "bg-emerald-500",
+    badge: "border-neutral-950 bg-neutral-950 text-white",
+    dot: "bg-white",
   },
   rejected: {
     label: "Rejected",
-    badge: "bg-rose-50 text-rose-700 border-rose-200",
-    dot: "bg-rose-500",
+    badge: "border-neutral-300 bg-transparent text-neutral-400 line-through",
+    dot: "bg-neutral-300",
   },
   withdrawn: {
     label: "Withdrawn",
-    badge: "bg-zinc-100 text-zinc-500 border-zinc-200",
-    dot: "bg-zinc-400",
+    badge: "border-neutral-300 bg-transparent text-neutral-400",
+    dot: "bg-neutral-300",
   },
 };
 

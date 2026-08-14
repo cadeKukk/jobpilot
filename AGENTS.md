@@ -24,8 +24,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
   Production uses Postgres via `DATABASE_URL`.
 - Schema lives in `src/db/schema.ts`; apply with `npm run db:push` (the dev
   database must be running). Seeds/scripts can run alongside the dev server.
-- Mutations are server actions in `src/lib/*-actions.ts`, always scoped to the
-  session user via `getCurrentUser()`.
-- External AI/API calls run server-side only; features must degrade gracefully
-  when optional keys (`OPENAI_API_KEY`, `ADZUNA_APP_ID`/`ADZUNA_APP_KEY`)
-  are missing.
+- Single-user app: there is no auth. `getCurrentUser()` returns the "owner"
+  row (auto-created). Server actions in `src/lib/*-actions.ts` still scope
+  queries by `user.id`.
+- All AI generation goes through `src/lib/cursor-ai.ts` — the Cursor SDK
+  (`@cursor/sdk`) running Fable 5 with `CURSOR_API_KEY`. The SDK is listed in
+  `serverExternalPackages` in next.config.ts (Turbopack can't bundle it).
+  Features must degrade gracefully when `CURSOR_API_KEY` or Adzuna keys are
+  missing.
+- UI style is editorial monochrome (matching cadekukk.vercel.app): no accent
+  colors, square corners, bracketed mono section markers. Shared primitives
+  live in `src/components/editorial.tsx` — use them instead of ad-hoc styles.

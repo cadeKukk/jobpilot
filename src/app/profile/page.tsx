@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { FileText, UserRound } from "lucide-react";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { userPreferences } from "@/db/schema";
+import {
+  MonoLabel,
+  SectionMark,
+  btnSolid,
+  inputBase,
+  textareaBase,
+} from "@/components/editorial";
+import { saveSearchQueries } from "@/lib/fit-actions";
 import { updateMasterResume } from "@/lib/resume-actions";
 import { getMasterResume } from "@/lib/resume";
 import { formatDate } from "@/lib/status";
@@ -9,77 +19,89 @@ export const metadata = { title: "Profile · JobPilot" };
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
-  const master = await getMasterResume(user.id);
+  const [master, prefs] = await Promise.all([
+    getMasterResume(user.id),
+    db.query.userPreferences.findFirst({
+      where: eq(userPreferences.userId, user.id),
+    }),
+  ]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Profile</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Your account and the master resume that powers tailoring and
-          matching.
+    <div className="space-y-10">
+      <div className="space-y-2">
+        <SectionMark text="SEC. 04 — PROFILE" />
+        <h1 className="text-3xl font-bold tracking-tight">{user.name}.</h1>
+        <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-400">
+          {user.email.toUpperCase()} · SINGLE-USER BUILD
         </p>
       </div>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-            <UserRound className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="font-medium">{user.name}</p>
-            <p className="text-sm text-slate-500">{user.email}</p>
-          </div>
+      <section className="space-y-4 border-t border-neutral-950 pt-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <SectionMark text="SEARCH PHRASES" />
+          <MonoLabel>EVERY SOURCE IS QUERIED WITH EACH LINE</MonoLabel>
         </div>
+        <form action={saveSearchQueries} className="max-w-xl space-y-4">
+          <textarea
+            name="queries"
+            rows={4}
+            defaultValue={(prefs?.searchQueries ?? []).join("\n")}
+            placeholder={"software engineer\nAI engineer\nIT specialist"}
+            className={`${textareaBase} font-mono text-xs`}
+          />
+          <label className="block space-y-1">
+            <MonoLabel>LOCATION HINT (FOR ADZUNA / US ROLES)</MonoLabel>
+            <input
+              name="location"
+              defaultValue={prefs?.location ?? ""}
+              placeholder="Virginia, Remote…"
+              className={inputBase}
+            />
+          </label>
+          <button type="submit" className={btnSolid}>
+            SAVE SEARCHES
+          </button>
+        </form>
       </section>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <FileText className="h-4 w-4 text-slate-400" />
-            <h2 className="text-sm font-semibold">Master resume</h2>
-          </div>
+      <section className="space-y-4 border-t border-neutral-950 pt-6">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <SectionMark text="BASE RÉSUMÉ" />
           {master && (
-            <span className="text-xs text-slate-400">
-              Updated {formatDate(master.createdAt)}
-            </span>
+            <MonoLabel>
+              UPDATED — {formatDate(master.createdAt).toUpperCase()}
+            </MonoLabel>
           )}
         </div>
 
         {master ? (
-          <form action={updateMasterResume} className="space-y-3">
+          <form action={updateMasterResume} className="space-y-4">
             <textarea
               name="content"
-              rows={16}
+              rows={18}
               defaultValue={master.content}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs leading-relaxed outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+              className={`${textareaBase} font-mono text-xs`}
             />
             <div className="flex items-center justify-between">
               <Link
                 href="/onboarding"
-                className="text-sm text-slate-500 hover:text-slate-900"
+                className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
               >
-                Re-upload from PDF instead
+                RE-UPLOAD FROM PDF →
               </Link>
-              <button
-                type="submit"
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-              >
-                Save changes
+              <button type="submit" className={btnSolid}>
+                SAVE RÉSUMÉ
               </button>
             </div>
           </form>
         ) : (
-          <div className="flex flex-col items-start gap-3">
-            <p className="text-sm text-slate-500">
-              You haven&apos;t added a resume yet. It&apos;s the foundation for
-              tailored documents and job matching.
+          <div className="space-y-4">
+            <p className="text-sm text-neutral-500">
+              No base résumé yet — it powers fit analysis, tailoring, Pilot,
+              and the autofill extension.
             </p>
-            <Link
-              href="/onboarding"
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-500"
-            >
-              Add your resume
+            <Link href="/onboarding" className={btnSolid}>
+              ADD BASE RÉSUMÉ →
             </Link>
           </div>
         )}

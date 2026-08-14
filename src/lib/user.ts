@@ -1,17 +1,27 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { users } from "@/db/schema";
 
-// Returns the signed-in user or sends the visitor to the login page.
+// Single-user mode: JobPilot is Cade's personal tool. The owner row is
+// created on first access — no auth, no sessions.
+export const OWNER_ID = "owner";
+
 export async function getCurrentUser() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) redirect("/login");
-  return session.user;
-}
+  const existing = await db.query.users.findFirst({
+    where: eq(users.id, OWNER_ID),
+  });
+  if (existing) return existing;
 
-// Non-redirecting variant for places that render differently when
-// signed out (e.g. the site header).
-export async function getOptionalUser() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  return session?.user ?? null;
+  await db
+    .insert(users)
+    .values({
+      id: OWNER_ID,
+      name: process.env.OWNER_NAME ?? "Cade Kukk",
+      email: process.env.OWNER_EMAIL ?? "cadekukk@gmail.com",
+    })
+    .onConflictDoNothing();
+
+  return (await db.query.users.findFirst({
+    where: eq(users.id, OWNER_ID),
+  }))!;
 }

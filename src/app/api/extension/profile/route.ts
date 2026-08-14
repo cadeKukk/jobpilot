@@ -1,31 +1,22 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { userPreferences } from "@/db/schema";
-import { auth } from "@/lib/auth";
 import { getMasterResume } from "@/lib/resume";
+import { getCurrentUser } from "@/lib/user";
 
-// Profile payload for the JobPilot Autofill Chrome extension. The extension
-// fetches this with the user's session cookie (it has host permission for
-// the app, so the request is treated as same-site).
-export async function GET(req: Request) {
-  const session = await auth.api.getSession({ headers: req.headers });
-  if (!session) {
-    return Response.json(
-      { error: "Not signed in. Open JobPilot and sign in first." },
-      { status: 401 }
-    );
-  }
-
-  const userId = session.user.id;
+// Profile payload for the JobPilot Autofill Chrome extension. Single-user
+// app running locally — no auth, the owner profile is returned directly.
+export async function GET() {
+  const user = await getCurrentUser();
   const [resume, prefs] = await Promise.all([
-    getMasterResume(userId),
+    getMasterResume(user.id),
     db.query.userPreferences.findFirst({
-      where: eq(userPreferences.userId, userId),
+      where: eq(userPreferences.userId, user.id),
     }),
   ]);
 
   const text = resume?.content ?? "";
-  const name = session.user.name?.trim() ?? "";
+  const name = user.name.trim();
   const nameParts = name.split(/\s+/).filter(Boolean);
 
   const linkedin = text.match(/linkedin\.com\/in\/[\w%-]+/i)?.[0] ?? null;
@@ -53,7 +44,7 @@ export async function GET(req: Request) {
       fullName: name || null,
       firstName: nameParts[0] ?? null,
       lastName: nameParts.length > 1 ? nameParts[nameParts.length - 1] : null,
-      email: session.user.email,
+      email: user.email,
       phone,
       linkedin: linkedin ? `https://${linkedin.replace(/^https?:\/\//, "")}` : null,
       github: github ? `https://${github.replace(/^https?:\/\//, "")}` : null,

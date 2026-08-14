@@ -1,7 +1,7 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { jobs, resumes, type Job, type Resume } from "@/db/schema";
-import { embedTexts, getAIConfig } from "@/lib/ai";
+import { jobs, type Job, type Resume } from "@/db/schema";
+import { cursorEnabled, generateJSON, resolveFableModel } from "@/lib/cursor-ai";
 
 type RawJob = {
   source: string;
@@ -47,7 +47,7 @@ function stripHtml(html: string): string {
 async function fetchRemotive(query: string): Promise<RawJob[]> {
   const url = `https://remotive.com/api/remote-jobs?search=${encodeURIComponent(
     query
-  )}&limit=40`;
+  )}&limit=30`;
   const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`Remotive responded ${res.status}`);
   const data = (await res.json()) as {
@@ -77,7 +77,7 @@ async function fetchRemotive(query: string): Promise<RawJob[]> {
   }));
 }
 
-// Adzuna: broad coverage incl. on-site roles. Requires free API keys.
+// Adzuna: broad US coverage incl. on-site roles. Requires free API keys.
 async function fetchAdzuna(query: string, location: string): Promise<RawJob[]> {
   const appId = process.env.ADZUNA_APP_ID;
   const appKey = process.env.ADZUNA_APP_KEY;
@@ -88,7 +88,7 @@ async function fetchAdzuna(query: string, location: string): Promise<RawJob[]> {
     app_id: appId,
     app_key: appKey,
     what: query,
-    results_per_page: "40",
+    results_per_page: "30",
     "content-type": "application/json",
   });
   if (location) params.set("where", location);
@@ -125,6 +125,85 @@ async function fetchAdzuna(query: string, location: string): Promise<RawJob[]> {
   }));
 }
 
+// cv.ee: Estonia's main job board (unofficial JSON search used by their SPA).
+async function fetchCvEe(query: string): Promise<RawJob[]> {
+  const url = `https://cv.ee/api/v1/vacancy-search-service/search?limit=30&offset=0&keywords[]=${encodeURIComponent(query)}`;
+  const res = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`cv.ee responded ${res.status}`);
+  const data = (await res.json()) as {
+    vacancies: Array<{
+      id: number;
+      positionTitle: string;
+      positionContent?: string;
+      employerName?: string;
+      salaryFrom?: number | null;
+      salaryTo?: number | null;
+      hourlySalary?: boolean;
+      publishDate?: string;
+      remoteWork?: boolean;
+    }>;
+  };
+  return (data.vacancies ?? []).map((v) => ({
+    source: "cvee",
+    externalId: String(v.id),
+    title: v.positionTitle,
+    company: v.employerName ?? "Unknown company",
+    location: v.remoteWork ? "Estonia (Remote OK)" : "Estonia",
+    url: `https://cv.ee/et/vacancy/${v.id}`,
+    description: v.positionContent
+      ? stripHtml(v.positionContent).slice(0, MAX_DESCRIPTION_CHARS)
+      : null,
+    salaryMin: !v.hourlySalary && v.salaryFrom ? Math.round(v.salaryFrom * 12) : null,
+    salaryMax: !v.hourlySalary && v.salaryTo ? Math.round(v.salaryTo * 12) : null,
+    salaryText:
+      v.salaryFrom && !v.hourlySalary
+        ? `€${v.salaryFrom}${v.salaryTo ? `–€${v.salaryTo}` : ""}/mo`
+        : null,
+    postedAt: v.publishDate ? new Date(v.publishDate) : null,
+  }));
+}
+
+// Arbeitnow: free EU job board API (no key). No server-side search, so
+// results are filtered against the query locally.
+async function fetchArbeitnow(query: string): Promise<RawJob[]> {
+  const res = await fetch("https://www.arbeitnow.com/api/job-board-api", {
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`Arbeitnow responded ${res.status}`);
+  const data = (await res.json()) as {
+    data: Array<{
+      slug: string;
+      company_name: string;
+      title: string;
+      description: string;
+      remote: boolean;
+      url: string;
+      location: string;
+      created_at: number;
+    }>;
+  };
+  const terms = tokenize(query);
+  return data.data
+    .filter((j) => {
+      const hay = j.title.toLowerCase();
+      return terms.some((t) => hay.includes(t));
+    })
+    .slice(0, 20)
+    .map((j) => ({
+      source: "arbeitnow",
+      externalId: j.slug,
+      title: j.title,
+      company: j.company_name,
+      location: j.remote ? `${j.location || "EU"} (Remote OK)` : j.location || "EU",
+      url: j.url,
+      description: stripHtml(j.description).slice(0, MAX_DESCRIPTION_CHARS),
+      postedAt: j.created_at ? new Date(j.created_at * 1000) : null,
+    }));
+}
+
 // --- Ingestion --------------------------------------------------------------
 
 export type IngestResult = {
@@ -132,22 +211,25 @@ export type IngestResult = {
   providerErrors: string[];
 };
 
-// Fetches from all available providers, upserts into the jobs table
-// (deduped by source + external id), and returns the stored rows.
+// Runs every provider for every search query, dedupes, upserts into the
+// jobs table, and returns the stored rows.
 export async function searchAndIngestJobs(
-  query: string,
+  queries: string[],
   location: string
 ): Promise<IngestResult> {
-  const settled = await Promise.allSettled([
-    fetchRemotive(query),
-    fetchAdzuna(query, location),
+  const tasks = queries.flatMap((q) => [
+    fetchRemotive(q),
+    fetchAdzuna(q, location),
+    fetchCvEe(q),
+    fetchArbeitnow(q),
   ]);
+  const settled = await Promise.allSettled(tasks);
 
   const raw: RawJob[] = [];
-  const providerErrors: string[] = [];
+  const errors = new Set<string>();
   for (const result of settled) {
     if (result.status === "fulfilled") raw.push(...result.value);
-    else providerErrors.push(String(result.reason?.message ?? result.reason));
+    else errors.add(String(result.reason?.message ?? result.reason));
   }
 
   const seen = new Set<string>();
@@ -158,7 +240,8 @@ export async function searchAndIngestJobs(
     return true;
   });
 
-  if (unique.length === 0) return { jobs: [], providerErrors };
+  if (unique.length === 0)
+    return { jobs: [], providerErrors: [...errors] };
 
   await db.insert(jobs).values(unique).onConflictDoNothing();
 
@@ -170,23 +253,11 @@ export async function searchAndIngestJobs(
 
   return {
     jobs: stored.filter((j) => wanted.has(`${j.source}:${j.externalId}`)),
-    providerErrors,
+    providerErrors: [...errors],
   };
 }
 
-// --- Match scoring ----------------------------------------------------------
-
-function cosine(a: number[], b: number[]): number {
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    normA += a[i] * a[i];
-    normB += b[i] * b[i];
-  }
-  return dot / (Math.sqrt(normA) * Math.sqrt(normB));
-}
+// --- Keyword scoring (retrieval + no-AI fallback) ---------------------------
 
 const STOPWORDS = new Set(
   "the and for with you your our their this that will are was were has have had can may not from into over under more most other some such only own same than too very just also been being does doing about above after again all any because before below between both during each few further here how its itself off once out she they them then there these those through until what when where which while who whom why".split(
@@ -200,7 +271,7 @@ function tokenize(text: string): string[] {
   );
 }
 
-function keywordScore(resumeText: string, job: Job): number {
+export function keywordScore(resumeText: string, job: Job): number {
   const resumeTerms = new Set(tokenize(resumeText));
   const jobTerms = new Set(tokenize(`${job.title} ${job.description ?? ""}`));
   if (jobTerms.size === 0) return 0;
@@ -216,98 +287,7 @@ function keywordScore(resumeText: string, job: Job): number {
   return Math.min(1, matched / Math.min(jobTerms.size, 60) + titleBonus);
 }
 
-async function embeddingScores(
-  resume: Resume,
-  jobList: Job[]
-): Promise<Map<string, number>> {
-  const ai = getAIConfig();
-  if (!ai) throw new Error("No AI config");
-
-  // Always embed the resume fresh: if the provider or embedding model
-  // changed since last run, cached vectors would have mismatched dimensions.
-  const [resumeEmbedding] = await embedTexts(ai, [resume.content]);
-  await db
-    .update(resumes)
-    .set({ embedding: resumeEmbedding })
-    .where(eq(resumes.id, resume.id));
-
-  const missing = jobList.filter(
-    (j) => !j.embedding || j.embedding.length !== resumeEmbedding.length
-  );
-  const BATCH = 64;
-  for (let i = 0; i < missing.length; i += BATCH) {
-    const batch = missing.slice(i, i + BATCH);
-    const vectors = await embedTexts(
-      ai,
-      batch.map((j) => `${j.title} at ${j.company}\n${j.description ?? ""}`)
-    );
-    await Promise.all(
-      batch.map((job, idx) => {
-        job.embedding = vectors[idx];
-        return db
-          .update(jobs)
-          .set({ embedding: vectors[idx] })
-          .where(eq(jobs.id, job.id));
-      })
-    );
-  }
-
-  const scores = new Map<string, number>();
-  for (const job of jobList) {
-    scores.set(
-      job.id,
-      job.embedding ? cosine(resumeEmbedding, job.embedding) : 0
-    );
-  }
-  return scores;
-}
-
-const ROLE_WORDS = [
-  "engineer",
-  "developer",
-  "designer",
-  "manager",
-  "analyst",
-  "scientist",
-  "architect",
-  "consultant",
-  "specialist",
-  "administrator",
-  "technician",
-  "accountant",
-  "marketer",
-  "recruiter",
-  "writer",
-  "nurse",
-  "teacher",
-];
-
-// Best-effort role guess from the top of a resume (e.g. "software engineer"),
-// so the matches page can auto-populate before the user saves a search.
-export function guessRoleFromResume(content: string): string | null {
-  const lines = content
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .slice(0, 12);
-
-  for (const line of lines) {
-    const lower = line.toLowerCase();
-    for (const word of ROLE_WORDS) {
-      const idx = lower.indexOf(word);
-      if (idx === -1) continue;
-      const before = lower
-        .slice(0, idx)
-        .split(/[^a-z+#./-]+/)
-        .filter(Boolean);
-      return [...before.slice(-2), word].join(" ").trim();
-    }
-  }
-  return null;
-}
-
-// Skills/terms a job shares with the resume — shown on the job detail page
-// so users can see at a glance why something matches.
+// Skills/terms a job shares with the resume.
 export function sharedKeywords(resumeText: string, job: Job): string[] {
   const resumeTerms = new Set(tokenize(resumeText));
   const jobTerms = tokenize(`${job.title} ${job.description ?? ""}`);
@@ -322,8 +302,7 @@ export function sharedKeywords(resumeText: string, job: Job): string[] {
   return shared.slice(0, 14);
 }
 
-// Frequent job-posting terms missing from the resume — surfaced on the job
-// detail page as "skills to highlight or close".
+// Frequent job-posting terms missing from the resume.
 export function missingKeywords(resumeText: string, job: Job): string[] {
   const resumeTerms = new Set(tokenize(resumeText));
   const counts = new Map<string, number>();
@@ -339,66 +318,83 @@ export function missingKeywords(resumeText: string, job: Job): string[] {
     .map(([term]) => term);
 }
 
-// Absolute match percentage for a single job (list scoring normalizes across
-// the result set, which is meaningless for one job).
-export async function scoreSingleJob(
-  resume: Resume,
-  job: Job
-): Promise<{ pct: number; method: ScoringMethod }> {
-  const ai = getAIConfig();
-  if (ai) {
-    try {
-      const scores = await embeddingScores(resume, [job]);
-      const cos = scores.get(job.id) ?? 0;
-      // Typical resume↔job cosine similarity lands in ~0.45–0.9.
-      const normalized = Math.min(1, Math.max(0, (cos - 0.45) / 0.45));
-      return {
-        pct: Math.round(35 + normalized * 60),
-        method: "embeddings",
-      };
-    } catch (err) {
-      console.error("Single-job embedding score failed:", err);
-    }
-  }
-  const raw = keywordScore(resume.content, job);
-  return { pct: Math.round(35 + raw * 60), method: "keywords" };
-}
+// --- Fable 5 fit analysis ----------------------------------------------------
 
-export type ScoringMethod = "embeddings" | "keywords";
+export type FitAnalysis = {
+  score: number;
+  verdict: string;
+  strengths: string[];
+  gaps: string[];
+};
 
-// Scores jobs against the resume: semantic embeddings when an OpenAI key is
-// configured, keyword overlap otherwise. Raw scores are min-max normalized
-// into a friendly 35–95% display range.
-export async function scoreJobsAgainstResume(
+const FIT_SYSTEM = `You are a rigorous technical recruiter evaluating whether ONE candidate fits job postings.
+Score fit on an absolute 0–100 scale:
+- 85–100: apply immediately — requirements clearly met
+- 65–84: strong fit — most requirements met, minor gaps
+- 40–64: stretch — real gaps but a case can be made
+- 0–39: poor fit — seniority, domain, or hard requirements don't line up
+Judge seniority honestly (a new grad is not a fit for "8+ years required"). Weigh transferable strengths (the candidate's AI, IT support, and political science background) where genuinely relevant. Never inflate scores.`;
+
+// Analyze up to `jobList.length` jobs in batches, persisting results on the
+// job rows so each posting is only ever analyzed once.
+export async function analyzeFits(
   resume: Resume,
   jobList: Job[]
-): Promise<{ percentages: Map<string, number>; method: ScoringMethod }> {
-  let raw: Map<string, number>;
-  let method: ScoringMethod = "keywords";
+): Promise<void> {
+  if (!cursorEnabled()) throw new Error("CURSOR_API_KEY is not set.");
+  const pending = jobList.filter((j) => j.fitAnalyzedAt == null);
+  if (pending.length === 0) return;
 
-  if (getAIConfig()) {
-    try {
-      raw = await embeddingScores(resume, jobList);
-      method = "embeddings";
-    } catch (err) {
-      console.error("Embedding scoring failed, falling back to keywords:", err);
-      raw = new Map(
-        jobList.map((j) => [j.id, keywordScore(resume.content, j)])
-      );
-    }
-  } else {
-    raw = new Map(jobList.map((j) => [j.id, keywordScore(resume.content, j)]));
+  const model = await resolveFableModel();
+  const BATCH = 5;
+
+  for (let i = 0; i < pending.length; i += BATCH) {
+    const batch = pending.slice(i, i + BATCH);
+    const jobsBlock = batch
+      .map(
+        (j, idx) =>
+          `JOB ${idx + 1} (id: ${j.id})\nTitle: ${j.title}\nCompany: ${j.company}\nLocation: ${j.location ?? "n/a"}\nDescription:\n${(j.description ?? "No description").slice(0, 2_500)}`
+      )
+      .join("\n\n---\n\n");
+
+    const parsed = await generateJSON<{
+      results: Array<{
+        id: string;
+        score: number;
+        verdict: string;
+        strengths: string[];
+        gaps: string[];
+      }>;
+    }>(
+      FIT_SYSTEM,
+      `CANDIDATE RESUME:\n${resume.content.slice(0, 8_000)}\n\n=== JOB POSTINGS TO EVALUATE ===\n\n${jobsBlock}`,
+      `{"results": [{"id": "<job id echoed back>", "score": 0-100, "verdict": "<one blunt sentence: should they apply and why>", "strengths": ["<2-4 short reasons they fit>"], "gaps": ["<0-4 short missing requirements>"]}]}`
+    );
+
+    await Promise.all(
+      parsed.results
+        .filter((r) => batch.some((j) => j.id === r.id))
+        .map((r) =>
+          db
+            .update(jobs)
+            .set({
+              fitScore: Math.max(0, Math.min(100, Math.round(r.score))),
+              fitVerdict: r.verdict,
+              fitStrengths: r.strengths?.slice(0, 4) ?? [],
+              fitGaps: r.gaps?.slice(0, 4) ?? [],
+              fitAnalyzedAt: new Date(),
+            })
+            .where(eq(jobs.id, r.id))
+        )
+    );
+    void model;
   }
+}
 
-  const values = [...raw.values()];
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const spread = max - min;
-
-  const percentages = new Map<string, number>();
-  for (const [id, value] of raw) {
-    const normalized = spread > 0.000001 ? (value - min) / spread : 0.5;
-    percentages.set(id, Math.round(35 + normalized * 60));
-  }
-  return { percentages, method };
+// Analyze a single job (used from the job detail page).
+export async function analyzeSingleFit(
+  resume: Resume,
+  job: Job
+): Promise<void> {
+  await analyzeFits(resume, [job]);
 }

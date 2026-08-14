@@ -7,12 +7,12 @@ master resume.
 
 ## Install (developer mode)
 
-1. Start the JobPilot app (`npm run dev`) and sign in at
-   [http://localhost:3000](http://localhost:3000).
+1. Start the JobPilot app (`npm run dev`) — no sign-in needed, it's a
+   single-user app.
 2. Open `chrome://extensions`, enable **Developer mode** (top right).
 3. Click **Load unpacked** and select this `extension/` folder.
 4. Pin "JobPilot Autofill" and click it — your profile syncs automatically
-   from the signed-in app session.
+   from the running app.
 
 ## How it works
 

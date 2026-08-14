@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { eq } from "drizzle-orm";
-import { ArrowLeft } from "lucide-react";
 import { db } from "@/db";
 import { jobs } from "@/db/schema";
+import { SectionMark } from "@/components/editorial";
 import { PilotChat } from "@/components/pilot-chat";
-import { getAIConfig } from "@/lib/ai";
+import { cursorEnabled } from "@/lib/cursor-ai";
 import { getMasterResume } from "@/lib/resume";
 import { getCurrentUser } from "@/lib/user";
 
@@ -25,7 +25,7 @@ export default async function PilotPage({
       : Promise.resolve(null),
   ]);
 
-  const aiEnabled = !!getAIConfig();
+  const aiEnabled = cursorEnabled();
 
   const suggestions = job
     ? [
@@ -37,36 +37,42 @@ export default async function PilotPage({
     : [
         "Review my resume — what are its three biggest weaknesses?",
         "What roles am I strongly qualified for right now?",
-        "How do I answer “tell me about yourself” in an interview?",
+        "What should I know about finding IT work in Estonia as a dual citizen?",
         "Plan my job search for the next two weeks.",
       ];
 
   return (
-    <div className="space-y-5">
-      <div>
-        {job && (
-          <Link
-            href={`/jobs/${job.id}`}
-            className="mb-2 inline-flex items-center gap-1 text-sm text-slate-500 transition hover:text-slate-900"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to {job.title}
-          </Link>
-        )}
-        <h1 className="text-2xl font-bold tracking-tight">Pilot</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          {job
-            ? `Your career copilot — with the ${job.title} posting at ${job.company} in context.`
-            : "Your 24/7 career copilot, grounded in your resume."}
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <SectionMark text="SEC. 03 — CAREER COPILOT" />
+        <h1 className="text-3xl font-bold tracking-tight">Pilot.</h1>
+        <p className="max-w-xl text-sm text-neutral-500">
+          {job ? (
+            <>
+              Fable 5, grounded in your résumé — with{" "}
+              <Link
+                href={`/jobs/${job.id}`}
+                className="underline decoration-2 underline-offset-2"
+              >
+                {job.title} at {job.company}
+              </Link>{" "}
+              in context.
+            </>
+          ) : (
+            "Fable 5, grounded in your résumé. Interview prep, fit questions, relocation strategy."
+          )}
         </p>
       </div>
 
       {!masterResume && (
         <Link
           href="/onboarding"
-          className="block rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800 transition hover:border-blue-300"
+          className="block border border-neutral-950 bg-white p-4 text-sm transition hover:bg-neutral-950 hover:text-white"
         >
-          Add your resume so Pilot can give personalized advice →
+          <span className="font-mono text-[10px] tracking-[0.18em]">
+            [ SETUP REQUIRED ]
+          </span>{" "}
+          Add your base résumé so Pilot can give personalized advice →
         </Link>
       )}
 

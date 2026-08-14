@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { Compass, SendHorizonal } from "lucide-react";
+import { btnSolid } from "@/components/editorial";
 import { askPilot, type PilotMessage } from "@/lib/pilot-actions";
 
 export function PilotChat({
@@ -41,66 +41,60 @@ export function PilotChat({
   }
 
   return (
-    <div className="flex h-[calc(100vh-16rem)] min-h-[24rem] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+    <div className="flex h-[calc(100vh-22rem)] min-h-[26rem] flex-col border border-neutral-950 bg-white">
+      <div className="flex-1 space-y-6 overflow-y-auto p-5">
         {messages.length === 0 && (
-          <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white">
-              <Compass className="h-6 w-6" />
-            </span>
-            <div>
-              <p className="font-semibold">Ask Pilot anything</p>
-              <p className="mt-1 text-sm text-slate-500">
-                Career advice grounded in your resume
-                {jobId ? " and this job posting" : ""}.
-              </p>
-            </div>
-            <div className="flex max-w-md flex-wrap justify-center gap-2">
+          <div className="flex h-full flex-col justify-center gap-6">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-neutral-400">
+              [ NO MESSAGES — START WITH ONE OF THESE ]
+            </p>
+            <ul className="space-y-3">
               {suggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => send(s)}
-                  disabled={!aiEnabled}
-                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:border-emerald-300 hover:text-emerald-700 disabled:opacity-50"
-                >
-                  {s}
-                </button>
+                <li key={s}>
+                  <button
+                    type="button"
+                    onClick={() => send(s)}
+                    disabled={!aiEnabled}
+                    className="text-left text-sm text-neutral-500 underline decoration-neutral-300 underline-offset-4 transition hover:text-neutral-950 hover:decoration-neutral-950 disabled:opacity-40"
+                  >
+                    → {s}
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
 
-        {messages.map((m, i) =>
-          m.role === "user" ? (
-            <div key={i} className="flex justify-end">
-              <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-emerald-600 px-4 py-2.5 text-sm text-white">
-                {m.content}
-              </p>
-            </div>
-          ) : (
-            <div key={i} className="flex items-start gap-2.5">
-              <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-                <Compass className="h-4 w-4" />
-              </span>
-              <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tl-md border border-slate-100 bg-slate-50 px-4 py-2.5 text-sm leading-relaxed text-slate-700">
-                {m.content}
-              </p>
-            </div>
-          )
-        )}
+        {messages.map((m, i) => (
+          <div key={i} className="space-y-1.5">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-neutral-400">
+              [ {m.role === "user" ? "YOU" : "PILOT"} ]
+            </p>
+            <p
+              className={`max-w-2xl whitespace-pre-wrap text-sm leading-relaxed ${
+                m.role === "user"
+                  ? "font-medium text-neutral-950"
+                  : "text-neutral-700"
+              }`}
+            >
+              {m.content}
+            </p>
+          </div>
+        ))}
 
         {isPending && (
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
-              <Compass className="h-4 w-4 animate-pulse" />
-            </span>
-            <span className="text-sm text-slate-400">Pilot is thinking…</span>
+          <div className="space-y-1.5">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-neutral-400">
+              [ PILOT ]
+            </p>
+            <p className="animate-pulse text-sm text-neutral-400">
+              Thinking with Fable 5…
+            </p>
           </div>
         )}
 
         {error && (
-          <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+          <p className="border border-neutral-950 p-3 text-sm text-neutral-700">
             {error}
           </p>
         )}
@@ -108,7 +102,7 @@ export function PilotChat({
       </div>
 
       <form
-        className="flex items-center gap-2 border-t border-slate-100 p-3"
+        className="flex items-center gap-3 border-t border-neutral-950 p-3"
         onSubmit={(e) => {
           e.preventDefault();
           send(input);
@@ -119,19 +113,18 @@ export function PilotChat({
           onChange={(e) => setInput(e.target.value)}
           placeholder={
             aiEnabled
-              ? "Ask about interviews, your fit, career moves…"
-              : "Add an AI key to chat with Pilot (see README)"
+              ? "Ask about interviews, fit, Estonia, career moves…"
+              : "Set CURSOR_API_KEY in .env to chat with Pilot"
           }
           disabled={!aiEnabled || isPending}
-          className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
+          className="flex-1 bg-transparent px-1 py-2 text-sm outline-none placeholder:text-neutral-400 disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={!aiEnabled || isPending || !input.trim()}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white transition hover:bg-emerald-500 disabled:opacity-40"
-          aria-label="Send"
+          className={btnSolid}
         >
-          <SendHorizonal className="h-4.5 w-4.5" />
+          SEND →
         </button>
       </form>
     </div>

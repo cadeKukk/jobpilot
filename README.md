@@ -1,112 +1,110 @@
 # JobPilot
 
-An AI job-search copilot: track applications, generate tailored resumes and
-cover letters, and discover matching jobs with semantic search — with a human
-approving every send.
+Cade Kukk's personal job-search copilot: multi-source job discovery (US +
+remote + Estonia), Fable 5 fit analysis and tailored documents via the Cursor
+SDK, and an application tracker — all in a monochrome editorial UI matching
+[cadekukk.vercel.app](https://cadekukk.vercel.app/).
+
+Single-user by design: no accounts, no login. The app boots straight into
+the owner's workspace.
 
 ## Features
 
-- **Accounts & onboarding** — email/password auth (Better Auth), then an
-  onboarding flow that builds your profile from an uploaded resume PDF,
-  pasted text, and/or LinkedIn experience
-- **Application tracker** — pipeline from saved → applied → interviewing →
-  offer, with an activity timeline, notes, and contacts per application
-- **Resume & cover letter tailoring** — one click on any application
-  generates a resume and cover letter tailored to that job description from
-  your master resume (OpenAI `gpt-5-mini`, structured output, strict
-  no-fabrication prompt), with copy-to-clipboard and print-to-PDF
-- **Job matching** — live postings pulled from job APIs (Remotive out of the
-  box, Adzuna with free keys), ranked against your resume — semantic
-  embedding scores with an OpenAI key, keyword scoring without — and saved
-  to the tracker in one click, with Recommended/In-tracker tabs and
-  remote-only / past-week filters
-- **Pilot AI copilot** — a 24/7 career-coach chat grounded in your resume
-  and, when opened from a posting, that specific job: fit analysis,
-  interview prep, outreach drafts, gap advice
-- **Match breakdown & insider connections** — every job page shows your
-  match score, shared skills, missing keywords, and LinkedIn shortcuts to
-  recruiters, hiring managers, and peers at the company for referrals
-- **Email assistant** *(phase 4)* — drafts follow-ups and detects status
-  changes from recruiter emails, with one-click approval
-- **Responsive UI** — sidebar navigation on desktop, bottom tabs on mobile,
-  circular match-score rings and rich job cards inspired by Jobright
-- **Chrome extension** — [JobPilot Autofill](extension/README.md) fills job
-  application forms on Greenhouse, Lever, Workday, Ashby, and more with your
-  profile and resume details, one click, right from the page
+- **Multi-source job discovery** — every search phrase is run against
+  Remotive (remote, keyless), **cv.ee** (Estonia, keyless), **Arbeitnow**
+  (EU, keyless), and Adzuna (US on-site, free keys). Deduped, stored, and
+  filterable by Remote / Estonia / Past week
+- **Fable 5 fit analysis** — the model reads the base résumé and each
+  posting, then returns an *absolute* 0–100 fit score, a blunt one-line
+  verdict, strengths, and gaps. Cached per job, batch-analyzed on demand
+- **Résumé & cover letter tailoring** — one click per application generates
+  documents tailored to that posting from the base résumé (strict
+  no-fabrication prompt), with copy and print-to-PDF
+- **Pilot copilot** — chat grounded in the résumé and (optionally) a specific
+  posting: interview prep, gap advice, Estonia relocation strategy
+- **Application tracker** — saved → applied → interviewing → offer pipeline
+  with activity log, notes, and contacts
+- **Chrome extension** — [JobPilot Autofill](extension/README.md) fills
+  application forms on Greenhouse, Lever, Workday, Ashby, and more from the
+  base résumé
+- **Editorial monochrome UI** — bracketed section markers, uppercase mono
+  metadata, numbered lists, hairline rules; black on paper, no accent colors
 
 ## Stack
 
 | Layer | Tech |
 | --- | --- |
 | Framework | Next.js (App Router) + TypeScript + Tailwind CSS |
-| Auth | Better Auth (email/password, session cookies) |
-| Database | Postgres + Drizzle ORM (embedded PGlite locally, Supabase/Neon in production) |
-| Parsing | unpdf for resume PDF text extraction |
-| AI | OpenAI (`gpt-5-mini` for generation, `text-embedding-3-small` + pgvector for matching) |
+| Database | Postgres + Drizzle ORM (embedded PGlite locally, hosted Postgres via `DATABASE_URL`) |
+| AI | Cursor SDK (`@cursor/sdk`) running Anthropic **Fable 5** — fit analysis, tailoring, Pilot |
+| Parsing | unpdf for résumé PDF text extraction |
+| Job sources | Remotive · cv.ee · Arbeitnow · Adzuna (optional keys) |
 
 ## Getting started
 
 ```bash
 npm install
-cp .env.example .env   # then set BETTER_AUTH_SECRET (openssl rand -base64 32)
-npm run db:push        # create tables
+cp .env.example .env   # then paste your CURSOR_API_KEY
+npm run db:push        # create tables (dev database must be running)
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and create an account,
-or seed a ready-made demo account (`demo@jobpilot.app` / `demopass123`) with
-sample data via `npm run db:seed`.
+Open [http://localhost:3000](http://localhost:3000) — the owner user is
+created automatically. Add your base résumé at `/onboarding`, set search
+phrases on `/profile`, and matches populate on `/jobs`.
 
 No database setup is required locally: `npm run dev` starts an embedded
-Postgres (PGlite) as a dedicated process behind the Postgres wire protocol
-on `127.0.0.1:5433`, persisted to `./.pglite`. Migrations and seeds connect
-to it like any Postgres — run them any time. In production, set
-`DATABASE_URL` to a hosted Postgres (Supabase, Neon, etc.).
+Postgres (PGlite) behind the Postgres wire protocol on `127.0.0.1:5433`,
+persisted to `./.pglite`.
 
-## AI setup
+## AI setup (Cursor key + Fable 5)
 
-The AI layer speaks the OpenAI-compatible API, so any provider works —
-including **Google Gemini's free tier** (no credit card, ~1,500 requests/day),
-which is plenty to demo document tailoring and semantic matching.
+All generation runs through the **Cursor SDK** with your own Cursor
+subscription:
 
-**Free (Gemini):** grab a key at
-[aistudio.google.com/apikey](https://aistudio.google.com/apikey), then in `.env`:
+1. Create an API key at [cursor.com/dashboard → Integrations](https://cursor.com/dashboard/integrations)
+2. Put it in `.env` as `CURSOR_API_KEY=cursor_...`
 
-```bash
-AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
-AI_API_KEY=your-gemini-key
-# defaults for this base URL: AI_MODEL=gemini-2.5-flash, AI_EMBEDDING_MODEL=gemini-embedding-001
-```
+The app queries your account's model list at runtime and picks the Fable 5
+model automatically (override with `CURSOR_MODEL` if you want a specific ID).
+Agent runs count against your Cursor usage.
 
-**Paid (OpenAI):** just set `OPENAI_API_KEY` (defaults: `gpt-5-mini` +
-`text-embedding-3-small`). Groq, OpenRouter, or a local Ollama server work
-too via `AI_BASE_URL`/`AI_API_KEY`/`AI_MODEL`.
-
-Without any AI key the app still works: job matching falls back to keyword
-scoring and the tailoring card shows setup instructions.
+Without the key the app still works: retrieval and keyword overlap keep
+running; fit analysis, tailoring, and Pilot show setup instructions instead.
 
 ### Other optional keys (in `.env`)
 
 | Key | Unlocks |
 | --- | --- |
-| `ADZUNA_APP_ID` + `ADZUNA_APP_KEY` | On-site/local jobs in Find jobs (free at developer.adzuna.com) |
+| `ADZUNA_APP_ID` + `ADZUNA_APP_KEY` | US on-site/hybrid jobs (free at developer.adzuna.com) |
+| `OWNER_NAME` / `OWNER_EMAIL` | Owner identity (defaults to Cade Kukk) |
 
-To use a hosted Postgres instead, copy `.env.example` to `.env` and set
-`DATABASE_URL`, then re-run `npm run db:push`.
+## How matching works
+
+1. **Retrieval** — each search phrase (Profile page, one per line) is run
+   against all sources; results are deduped and stored.
+2. **Ranking** — analyzed jobs sort by their absolute Fable 5 fit score;
+   unanalyzed ones by keyword overlap with the résumé.
+3. **Analysis** — "Run fit analysis" sends the best unanalyzed candidates to
+   Fable 5 in batches of 5. Scores are absolute (85+ apply now, <40 skip),
+   judged on seniority, hard requirements, and transferable strengths —
+   results are cached on the job row forever.
 
 ## Scripts
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | Start the dev server |
+| `npm run dev` | Start the dev server (+ local database) |
 | `npm run db:push` | Apply the Drizzle schema to the database |
-| `npm run db:seed` | Seed sample applications |
+| `npm run db:seed` | Create the owner user |
 | `npm run db:studio` | Browse the database in Drizzle Studio |
 
 ## Roadmap
 
-- [x] Phase 1 — Application tracker (CRUD, status pipeline, timeline, contacts)
-- [x] Auth & onboarding (accounts, resume upload/parse, LinkedIn import)
-- [x] Phase 3 — Job matching engine (Remotive/Adzuna ingestion, embedding or keyword ranking, save-to-tracker)
-- [x] Phase 2 — Resume & cover letter tailoring (OpenAI structured outputs, print-to-PDF)
-- [ ] Phase 4 — Email assistant (Gmail API, draft-only replies, auto status detection)
+- [x] Application tracker (CRUD, status pipeline, timeline, contacts)
+- [x] Base résumé onboarding (PDF upload/parse, LinkedIn paste)
+- [x] Multi-source matching engine (Remotive/cv.ee/Arbeitnow/Adzuna + Fable 5 fit analysis)
+- [x] Résumé & cover letter tailoring (Cursor SDK, print-to-PDF)
+- [x] Pilot copilot, Chrome autofill extension
+- [x] Single-user personal build, editorial monochrome redesign
+- [ ] Email assistant (draft-only follow-ups, auto status detection)
