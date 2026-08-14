@@ -31,9 +31,9 @@ export async function resolveFableModel(): Promise<string> {
     : ((listed as { models?: Array<{ id: string }> }).models ?? []);
   const ids = models.map((m) => m.id);
 
-  // Prefer an exact fable-5 family match, then anything fable.
+  // Prefer the fable-5 family (e.g. "claude-fable-5"), then anything fable.
   const fable =
-    ids.find((id) => /^fable-5($|[^0-9])/i.test(id)) ??
+    ids.find((id) => /fable-5($|[^0-9])/i.test(id)) ??
     ids.find((id) => /fable/i.test(id));
   if (!fable) {
     throw new Error(

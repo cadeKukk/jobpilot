@@ -31,13 +31,13 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <header className="sticky top-0 z-20 border-b border-neutral-950 bg-[#fafaf8]/95 backdrop-blur print:hidden">
+        <header className="sticky top-0 z-20 border-b border-neutral-50 bg-[#0a0a0a]/95 backdrop-blur print:hidden">
           <div className="mx-auto flex h-14 w-full max-w-5xl flex-wrap items-center justify-between gap-x-6 px-4 sm:px-6">
             <Link href="/" className="flex items-baseline gap-3">
               <span className="text-[15px] font-bold tracking-tight">
                 JOBPILOT
               </span>
-              <span className="hidden font-mono text-[10px] tracking-[0.22em] text-neutral-400 sm:inline">
+              <span className="hidden font-mono text-[10px] tracking-[0.22em] text-neutral-500 sm:inline">
                 CADE KUKK — PERSONAL BUILD
               </span>
             </Link>
@@ -49,12 +49,12 @@ export default function RootLayout({
           {children}
         </main>
 
-        <footer className="border-t border-neutral-200 print:hidden">
+        <footer className="border-t border-neutral-800 print:hidden">
           <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-            <span className="font-mono text-[10px] tracking-[0.2em] text-neutral-400">
+            <span className="font-mono text-[10px] tracking-[0.2em] text-neutral-500">
               © 2026 CADE KUKK
             </span>
-            <span className="font-mono text-[10px] tracking-[0.2em] text-neutral-400">
+            <span className="font-mono text-[10px] tracking-[0.2em] text-neutral-500">
               POWERED BY FABLE 5
             </span>
           </div>

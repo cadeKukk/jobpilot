@@ -41,11 +41,11 @@ export function PilotChat({
   }
 
   return (
-    <div className="flex h-[calc(100vh-22rem)] min-h-[26rem] flex-col border border-neutral-950 bg-white">
+    <div className="flex h-[calc(100vh-22rem)] min-h-[26rem] flex-col border border-neutral-50 bg-neutral-900">
       <div className="flex-1 space-y-6 overflow-y-auto p-5">
         {messages.length === 0 && (
           <div className="flex h-full flex-col justify-center gap-6">
-            <p className="font-mono text-[10px] tracking-[0.22em] text-neutral-400">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-neutral-500">
               [ NO MESSAGES — START WITH ONE OF THESE ]
             </p>
             <ul className="space-y-3">
@@ -55,7 +55,7 @@ export function PilotChat({
                     type="button"
                     onClick={() => send(s)}
                     disabled={!aiEnabled}
-                    className="text-left text-sm text-neutral-500 underline decoration-neutral-300 underline-offset-4 transition hover:text-neutral-950 hover:decoration-neutral-950 disabled:opacity-40"
+                    className="hover-invert text-left text-sm text-neutral-400 disabled:opacity-40"
                   >
                     → {s}
                   </button>
@@ -67,14 +67,14 @@ export function PilotChat({
 
         {messages.map((m, i) => (
           <div key={i} className="space-y-1.5">
-            <p className="font-mono text-[10px] tracking-[0.22em] text-neutral-400">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-neutral-500">
               [ {m.role === "user" ? "YOU" : "PILOT"} ]
             </p>
             <p
               className={`max-w-2xl whitespace-pre-wrap text-sm leading-relaxed ${
                 m.role === "user"
-                  ? "font-medium text-neutral-950"
-                  : "text-neutral-700"
+                  ? "font-medium text-neutral-50"
+                  : "text-neutral-300"
               }`}
             >
               {m.content}
@@ -84,17 +84,17 @@ export function PilotChat({
 
         {isPending && (
           <div className="space-y-1.5">
-            <p className="font-mono text-[10px] tracking-[0.22em] text-neutral-400">
+            <p className="font-mono text-[10px] tracking-[0.22em] text-neutral-500">
               [ PILOT ]
             </p>
-            <p className="animate-pulse text-sm text-neutral-400">
+            <p className="animate-pulse text-sm text-neutral-500">
               Thinking with Fable 5…
             </p>
           </div>
         )}
 
         {error && (
-          <p className="border border-neutral-950 p-3 text-sm text-neutral-700">
+          <p className="border border-neutral-50 p-3 text-sm text-neutral-300">
             {error}
           </p>
         )}
@@ -102,7 +102,7 @@ export function PilotChat({
       </div>
 
       <form
-        className="flex items-center gap-3 border-t border-neutral-950 p-3"
+        className="flex items-center gap-3 border-t border-neutral-50 p-3"
         onSubmit={(e) => {
           e.preventDefault();
           send(input);
@@ -117,7 +117,7 @@ export function PilotChat({
               : "Set CURSOR_API_KEY in .env to chat with Pilot"
           }
           disabled={!aiEnabled || isPending}
-          className="flex-1 bg-transparent px-1 py-2 text-sm outline-none placeholder:text-neutral-400 disabled:opacity-50"
+          className="flex-1 bg-transparent px-1 py-2 text-sm outline-none placeholder:text-neutral-500 disabled:opacity-50"
         />
         <button
           type="submit"

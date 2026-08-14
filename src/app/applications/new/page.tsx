@@ -16,7 +16,7 @@ export default function NewApplicationPage() {
       <div className="space-y-2">
         <Link
           href="/"
-          className="font-mono text-[11px] tracking-[0.18em] text-neutral-400 transition hover:text-neutral-950"
+          className="font-mono text-[11px] tracking-[0.18em] text-neutral-500 hover-invert"
         >
           ← BACK TO TRACKER
         </Link>
@@ -24,7 +24,7 @@ export default function NewApplicationPage() {
         <h1 className="text-3xl font-bold tracking-tight">Add application.</h1>
       </div>
 
-      <form action={createApplication} className="space-y-6 border-t border-neutral-950 pt-6">
+      <form action={createApplication} className="space-y-6 border-t border-neutral-50 pt-6">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="COMPANY *">
             <input
@@ -99,10 +99,10 @@ export default function NewApplicationPage() {
           />
         </Field>
 
-        <div className="flex items-center justify-between border-t border-neutral-950 pt-6">
+        <div className="flex items-center justify-between border-t border-neutral-50 pt-6">
           <Link
             href="/"
-            className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
+            className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
           >
             CANCEL
           </Link>

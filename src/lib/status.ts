@@ -7,33 +7,33 @@ export const STATUS_META: Record<
 > = {
   saved: {
     label: "Saved",
-    badge: "border-neutral-300 bg-transparent text-neutral-500",
-    dot: "bg-neutral-400",
+    badge: "border-neutral-700 bg-transparent text-neutral-400",
+    dot: "bg-neutral-500",
   },
   applied: {
     label: "Applied",
-    badge: "border-neutral-950 bg-transparent text-neutral-950",
-    dot: "bg-neutral-950",
+    badge: "border-neutral-50 bg-transparent text-neutral-50",
+    dot: "bg-neutral-50",
   },
   interviewing: {
     label: "Interviewing",
-    badge: "border-neutral-950 bg-neutral-200 text-neutral-950",
-    dot: "bg-neutral-950",
+    badge: "border-neutral-50 bg-neutral-800 text-neutral-50",
+    dot: "bg-neutral-50",
   },
   offer: {
     label: "Offer",
-    badge: "border-neutral-950 bg-neutral-950 text-white",
-    dot: "bg-white",
+    badge: "border-neutral-50 bg-neutral-50 text-neutral-950",
+    dot: "bg-neutral-900",
   },
   rejected: {
     label: "Rejected",
-    badge: "border-neutral-300 bg-transparent text-neutral-400 line-through",
-    dot: "bg-neutral-300",
+    badge: "border-neutral-700 bg-transparent text-neutral-500 line-through",
+    dot: "bg-neutral-700",
   },
   withdrawn: {
     label: "Withdrawn",
-    badge: "border-neutral-300 bg-transparent text-neutral-400",
-    dot: "bg-neutral-300",
+    badge: "border-neutral-700 bg-transparent text-neutral-500",
+    dot: "bg-neutral-700",
   },
 };
 

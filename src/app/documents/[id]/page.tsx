@@ -40,14 +40,16 @@ export default async function DocumentPage({
       <div className="flex items-center justify-between print:hidden">
         <Link
           href={`/applications/${doc.applicationId}`}
-          className="font-mono text-[11px] tracking-[0.18em] text-neutral-400 transition hover:text-neutral-950"
+          className="font-mono text-[11px] tracking-[0.18em] text-neutral-500 hover-invert"
         >
           ← BACK TO APPLICATION
         </Link>
         <PrintButton />
       </div>
 
-      <div className="border border-neutral-950 bg-white p-8 print:border-0 print:p-0">
+      {/* Rendered as a white "paper" artifact so it reads as a document
+          on the dark UI and prints black-on-white. */}
+      <div className="border border-neutral-50 bg-white p-8 print:border-0 print:p-0">
         <p className="mb-6 font-mono text-[10px] tracking-[0.16em] text-neutral-400 print:hidden">
           {title.toUpperCase()} · GENERATED{" "}
           {formatDate(doc.createdAt).toUpperCase()}

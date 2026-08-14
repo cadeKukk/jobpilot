@@ -47,18 +47,18 @@ export default async function JobDetailPage({
     <div className="space-y-8">
       <Link
         href="/jobs"
-        className="font-mono text-[11px] tracking-[0.18em] text-neutral-400 transition hover:text-neutral-950"
+        className="font-mono text-[11px] tracking-[0.18em] text-neutral-500 hover-invert"
       >
         ← BACK TO MATCHES
       </Link>
 
-      <div className="space-y-3 border-b border-neutral-950 pb-6">
+      <div className="space-y-3 border-b border-neutral-50 pb-6">
         <SectionMark text="SEC. 02 — POSTING" />
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold tracking-tight">{job.title}</h1>
-            <p className="mt-1 text-lg text-neutral-600">{job.company}</p>
-            <p className="mt-2 font-mono text-[10px] tracking-[0.16em] text-neutral-400">
+            <p className="mt-1 text-lg text-neutral-400">{job.company}</p>
+            <p className="mt-2 font-mono text-[10px] tracking-[0.16em] text-neutral-500">
               {[
                 job.location && `LOC — ${job.location.toUpperCase()}`,
                 salary && `SAL — ${salary.toUpperCase()}`,
@@ -74,7 +74,7 @@ export default async function JobDetailPage({
             <div className="text-right">
               <p className="text-4xl font-bold tabular-nums tracking-tight">
                 {job.fitScore}
-                <span className="text-lg text-neutral-400">/100</span>
+                <span className="text-lg text-neutral-500">/100</span>
               </p>
               <MonoLabel>FABLE 5 FIT</MonoLabel>
             </div>
@@ -101,7 +101,7 @@ export default async function JobDetailPage({
       {savedApplication && (
         <Link
           href={`/applications/${savedApplication.id}`}
-          className="block border border-neutral-950 bg-white p-4 text-sm transition hover:bg-neutral-950 hover:text-white"
+          className="block border border-neutral-50 bg-neutral-900 p-4 text-sm transition hover:bg-neutral-50 hover:text-neutral-950"
         >
           <span className="font-mono text-[10px] tracking-[0.18em]">
             [ IN TRACKER ]
@@ -123,7 +123,7 @@ export default async function JobDetailPage({
                   {(job.fitStrengths?.length ?? 0) > 0 && (
                     <div className="space-y-2">
                       <MonoLabel>STRENGTHS</MonoLabel>
-                      <ul className="space-y-1.5 text-sm leading-relaxed text-neutral-700">
+                      <ul className="space-y-1.5 text-sm leading-relaxed text-neutral-300">
                         {job.fitStrengths!.map((s) => (
                           <li key={s}>— {s}</li>
                         ))}
@@ -133,7 +133,7 @@ export default async function JobDetailPage({
                   {(job.fitGaps?.length ?? 0) > 0 && (
                     <div className="space-y-2">
                       <MonoLabel>GAPS</MonoLabel>
-                      <ul className="space-y-1.5 text-sm leading-relaxed text-neutral-500">
+                      <ul className="space-y-1.5 text-sm leading-relaxed text-neutral-400">
                         {job.fitGaps!.map((g) => (
                           <li key={g}>— {g}</li>
                         ))}
@@ -145,7 +145,7 @@ export default async function JobDetailPage({
             ) : masterResume && cursorEnabled() ? (
               <AnalyzeButton jobIds={[job.id]} label="ANALYZE THIS JOB" />
             ) : (
-              <p className="text-sm text-neutral-400">
+              <p className="text-sm text-neutral-500">
                 {masterResume
                   ? "Set CURSOR_API_KEY in .env to run Fable 5 fit analysis."
                   : "Add your base résumé to run fit analysis."}
@@ -154,13 +154,13 @@ export default async function JobDetailPage({
           </section>
 
           {(skills.length > 0 || gaps.length > 0) && (
-            <section className="space-y-4 border-t border-neutral-200 pt-6">
+            <section className="space-y-4 border-t border-neutral-800 pt-6">
               <SectionMark text="KEYWORD OVERLAP" />
               <div className="grid gap-6 sm:grid-cols-2">
                 {skills.length > 0 && (
                   <div className="space-y-2">
                     <MonoLabel>ON YOUR RÉSUMÉ</MonoLabel>
-                    <p className="text-sm leading-relaxed text-neutral-700">
+                    <p className="text-sm leading-relaxed text-neutral-300">
                       {skills.join("  ·  ")}
                     </p>
                   </div>
@@ -168,7 +168,7 @@ export default async function JobDetailPage({
                 {gaps.length > 0 && (
                   <div className="space-y-2">
                     <MonoLabel>IN POSTING ONLY</MonoLabel>
-                    <p className="text-sm leading-relaxed text-neutral-400">
+                    <p className="text-sm leading-relaxed text-neutral-500">
                       {gaps.join("  ·  ")}
                     </p>
                   </div>
@@ -177,14 +177,14 @@ export default async function JobDetailPage({
             </section>
           )}
 
-          <section className="space-y-4 border-t border-neutral-200 pt-6">
+          <section className="space-y-4 border-t border-neutral-800 pt-6">
             <SectionMark text="DESCRIPTION" />
             {job.description ? (
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-300">
                 {job.description}
               </p>
             ) : (
-              <p className="text-sm text-neutral-400">
+              <p className="text-sm text-neutral-500">
                 No description available — check the original posting.
               </p>
             )}
@@ -192,7 +192,7 @@ export default async function JobDetailPage({
         </div>
 
         <div className="space-y-8">
-          <section className="space-y-3 border border-neutral-950 p-5">
+          <section className="space-y-3 border border-neutral-50 p-5">
             <SectionMark text="AT A GLANCE" />
             <dl className="space-y-2.5">
               <GlanceRow label="SALARY" value={salary ?? "Not listed"} />
@@ -204,7 +204,7 @@ export default async function JobDetailPage({
 
           <section className="space-y-3">
             <SectionMark text="INSIDER CONNECTIONS" />
-            <p className="text-sm leading-relaxed text-neutral-500">
+            <p className="text-sm leading-relaxed text-neutral-400">
               A referral multiplies your odds. Find people at {job.company}:
             </p>
             <ul className="space-y-2">
@@ -231,7 +231,7 @@ export default async function JobDetailPage({
 function GlanceRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="font-mono text-[10px] tracking-[0.16em] text-neutral-400">
+      <dt className="font-mono text-[10px] tracking-[0.16em] text-neutral-500">
         {label}
       </dt>
       <dd className="text-right text-sm font-medium capitalize">{value}</dd>
@@ -246,7 +246,7 @@ function InsiderLink({ href, label }: { href: string; label: string }) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
+        className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
       >
         {label} ↗
       </a>

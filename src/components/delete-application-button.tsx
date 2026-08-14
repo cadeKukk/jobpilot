@@ -19,7 +19,7 @@ export function DeleteApplicationButton({
           startTransition(() => deleteApplication(applicationId));
         }
       }}
-      className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950 hover:line-through disabled:opacity-40"
+      className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert hover:line-through disabled:opacity-40"
     >
       {isPending ? "DELETING…" : "DELETE APPLICATION ×"}
     </button>

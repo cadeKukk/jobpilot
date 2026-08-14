@@ -50,7 +50,7 @@ export default async function TrackerPage({
       <div className="space-y-2">
         <SectionMark text="SEC. 02 — APPLICATION TRACKER" />
         <h1 className="text-3xl font-bold tracking-tight">Tracker.</h1>
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-neutral-400">
           Every application, from saved to signed.
         </p>
       </div>
@@ -58,7 +58,7 @@ export default async function TrackerPage({
       {!masterResume && (
         <Link
           href="/onboarding"
-          className="block border border-neutral-950 bg-white p-4 text-sm transition hover:bg-neutral-950 hover:text-white"
+          className="block border border-neutral-50 bg-neutral-900 p-4 text-sm transition hover:bg-neutral-50 hover:text-neutral-950"
         >
           <span className="font-mono text-[10px] tracking-[0.18em]">
             [ SETUP REQUIRED ]
@@ -67,9 +67,9 @@ export default async function TrackerPage({
         </Link>
       )}
 
-      <div className="grid grid-cols-2 gap-px border border-neutral-950 bg-neutral-950 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px border border-neutral-50 bg-neutral-50 sm:grid-cols-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-[#fafaf8] p-4">
+          <div key={stat.label} className="bg-[#0a0a0a] p-4">
             <p className="text-3xl font-bold tabular-nums tracking-tight">
               {stat.value}
             </p>
@@ -78,7 +78,7 @@ export default async function TrackerPage({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-neutral-950 py-3">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-neutral-50 py-3">
         <FilterLink href="/" active={!filter}>
           ALL — {allApps.length}
         </FilterLink>
@@ -90,8 +90,8 @@ export default async function TrackerPage({
       </div>
 
       {visible.length === 0 ? (
-        <div className="space-y-4 border border-dashed border-neutral-300 py-16 text-center">
-          <p className="text-sm text-neutral-400">
+        <div className="space-y-4 border border-dashed border-neutral-700 py-16 text-center">
+          <p className="text-sm text-neutral-500">
             {filter
               ? `No ${STATUS_META[filter].label.toLowerCase()} applications.`
               : "Nothing tracked yet."}
@@ -108,20 +108,20 @@ export default async function TrackerPage({
           )}
         </div>
       ) : (
-        <ol className="border-t border-neutral-950">
+        <ol className="border-t border-neutral-50">
           {visible.map((app, i) => (
             <li
               key={app.id}
-              className="flex items-center gap-4 border-b border-neutral-200 py-4 transition hover:bg-white"
+              className="flex items-center gap-4 border-b border-neutral-800 py-4 transition hover:bg-neutral-900"
             >
-              <span className="hidden w-14 shrink-0 font-mono text-[10px] tracking-[0.18em] text-neutral-400 sm:block">
+              <span className="hidden w-14 shrink-0 font-mono text-[10px] tracking-[0.18em] text-neutral-500 sm:block">
                 [ {String(i + 1).padStart(2, "0")} ]
               </span>
               <Link href={`/applications/${app.id}`} className="min-w-0 flex-1">
-                <p className="truncate font-semibold tracking-tight hover:underline decoration-2 underline-offset-4">
+                <p className="truncate font-semibold tracking-tight hover-invert">
                   {app.jobTitle}
                 </p>
-                <p className="mt-0.5 font-mono text-[10px] tracking-[0.16em] text-neutral-400">
+                <p className="mt-0.5 font-mono text-[10px] tracking-[0.16em] text-neutral-500">
                   {[
                     app.company.toUpperCase(),
                     app.location && `LOC — ${app.location.toUpperCase()}`,
@@ -141,7 +141,7 @@ export default async function TrackerPage({
       <div className="flex justify-end">
         <Link
           href="/applications/new"
-          className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
+          className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
         >
           ADD APPLICATION +
         </Link>
@@ -162,10 +162,10 @@ function FilterLink({
   return (
     <Link
       href={href}
-      className={`font-mono text-[11px] tracking-[0.18em] transition ${
+      className={`px-2 py-1 font-mono text-[11px] tracking-[0.18em] ${
         active
-          ? "bg-neutral-950 px-2 py-1 text-white"
-          : "text-neutral-400 hover:text-neutral-950"
+          ? "bg-neutral-50 text-neutral-950"
+          : "text-neutral-500 hover-invert"
       }`}
     >
       {children}

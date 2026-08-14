@@ -39,11 +39,11 @@ export function AnalyzeButton({
           : (label ?? `RUN FIT ANALYSIS — ${jobIds.length} NEW`)}
       </button>
       {isPending && (
-        <span className="font-mono text-[10px] tracking-[0.18em] text-neutral-400">
+        <span className="font-mono text-[10px] tracking-[0.18em] text-neutral-500">
           ~10–30S PER BATCH
         </span>
       )}
-      {error && <span className="text-sm text-neutral-500">{error}</span>}
+      {error && <span className="text-sm text-neutral-400">{error}</span>}
     </div>
   );
 }

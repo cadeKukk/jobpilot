@@ -4,6 +4,19 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Changed — Dark inversion + universal hover-invert
+
+- **Inverted palette**: the editorial theme is now near-white ink on
+  `#0a0a0a` paper across every page, the extension popup, and text
+  selection. Generated documents keep a white "paper" card so they read as
+  artifacts on the dark UI and print black-on-white.
+- **Universal hover treatment**: all interactive text (nav, titles, filter
+  chips, ghost links, Pilot suggestions, inline links) now uses one
+  `.hover-invert` utility — a full highlight-and-invert, like a text
+  selection — replacing the mixed underline/color-shift hovers.
+- Fable model resolution now matches `claude-fable-5`-style IDs; verified
+  live against the owner's Cursor account.
+
 ### Changed — Personal single-user build: Cursor SDK AI, Estonia sources, editorial redesign
 
 - **Single-user mode**: removed Better Auth entirely (login/signup pages,

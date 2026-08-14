@@ -15,7 +15,7 @@ export function SaveJobButton({
 
   if (saved) {
     return (
-      <span className="font-mono text-[11px] tracking-[0.14em] text-neutral-950">
+      <span className="font-mono text-[11px] tracking-[0.14em] text-neutral-50">
         ✓ IN TRACKER
       </span>
     );

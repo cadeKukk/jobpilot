@@ -54,20 +54,20 @@ export default async function ApplicationDetailPage({
     <div className="space-y-8">
       <Link
         href="/"
-        className="font-mono text-[11px] tracking-[0.18em] text-neutral-400 transition hover:text-neutral-950"
+        className="font-mono text-[11px] tracking-[0.18em] text-neutral-500 hover-invert"
       >
         ← BACK TO TRACKER
       </Link>
 
-      <div className="space-y-3 border-b border-neutral-950 pb-6">
+      <div className="space-y-3 border-b border-neutral-50 pb-6">
         <SectionMark text="SEC. 02 — APPLICATION" />
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <h1 className="text-3xl font-bold tracking-tight">
               {app.jobTitle}
             </h1>
-            <p className="mt-1 text-lg text-neutral-600">{app.company}</p>
-            <p className="mt-2 font-mono text-[10px] tracking-[0.16em] text-neutral-400">
+            <p className="mt-1 text-lg text-neutral-400">{app.company}</p>
+            <p className="mt-2 font-mono text-[10px] tracking-[0.16em] text-neutral-500">
               {[
                 app.location && `LOC — ${app.location.toUpperCase()}`,
                 app.salary && `SAL — ${app.salary.toUpperCase()}`,
@@ -84,7 +84,7 @@ export default async function ApplicationDetailPage({
             href={app.jobUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
+            className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
           >
             VIEW ORIGINAL POSTING ↗
           </a>
@@ -96,16 +96,16 @@ export default async function ApplicationDetailPage({
           <section className="space-y-4">
             <SectionMark text="TAILORED DOCUMENTS — FABLE 5" />
             {!aiEnabled ? (
-              <p className="text-sm text-neutral-500">
-                Set <code className="bg-neutral-200 px-1">CURSOR_API_KEY</code>{" "}
+              <p className="text-sm text-neutral-400">
+                Set <code className="bg-neutral-800 px-1">CURSOR_API_KEY</code>{" "}
                 in .env to generate a résumé and cover letter tailored to this
                 job.
               </p>
             ) : !masterResume ? (
-              <p className="text-sm text-neutral-500">
+              <p className="text-sm text-neutral-400">
                 <Link
                   href="/onboarding"
-                  className="underline decoration-2 underline-offset-2"
+                  className="hover-invert underline decoration-2 underline-offset-2"
                 >
                   Add your base résumé
                 </Link>{" "}
@@ -125,24 +125,24 @@ export default async function ApplicationDetailPage({
           </section>
 
           {app.jobDescription && (
-            <section className="space-y-4 border-t border-neutral-200 pt-6">
+            <section className="space-y-4 border-t border-neutral-800 pt-6">
               <SectionMark text="JOB DESCRIPTION" />
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-300">
                 {app.jobDescription}
               </p>
             </section>
           )}
 
           {app.notes && (
-            <section className="space-y-4 border-t border-neutral-200 pt-6">
+            <section className="space-y-4 border-t border-neutral-800 pt-6">
               <SectionMark text="NOTES" />
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-700">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-neutral-300">
                 {app.notes}
               </p>
             </section>
           )}
 
-          <section className="space-y-4 border-t border-neutral-200 pt-6">
+          <section className="space-y-4 border-t border-neutral-800 pt-6">
             <SectionMark text="ACTIVITY LOG" />
             <form action={addNote.bind(null, app.id)} className="flex gap-3">
               <input
@@ -155,13 +155,13 @@ export default async function ApplicationDetailPage({
               </button>
             </form>
 
-            <ol className="border-t border-neutral-200">
+            <ol className="border-t border-neutral-800">
               {events.map((event) => (
                 <li
                   key={event.id}
-                  className="flex items-baseline gap-4 border-b border-neutral-200 py-3"
+                  className="flex items-baseline gap-4 border-b border-neutral-800 py-3"
                 >
-                  <span className="w-24 shrink-0 font-mono text-[10px] tracking-[0.14em] text-neutral-400">
+                  <span className="w-24 shrink-0 font-mono text-[10px] tracking-[0.14em] text-neutral-500">
                     {formatDate(event.occurredAt).toUpperCase()}
                   </span>
                   {event.type === "status_change" &&
@@ -169,11 +169,11 @@ export default async function ApplicationDetailPage({
                   event.toStatus ? (
                     <span className="flex flex-wrap items-center gap-2 text-sm">
                       <StatusBadge status={event.fromStatus} />
-                      <span className="text-neutral-400">→</span>
+                      <span className="text-neutral-500">→</span>
                       <StatusBadge status={event.toStatus} />
                     </span>
                   ) : (
-                    <p className="text-sm text-neutral-700">{event.note}</p>
+                    <p className="text-sm text-neutral-300">{event.note}</p>
                   )}
                 </li>
               ))}
@@ -182,7 +182,7 @@ export default async function ApplicationDetailPage({
         </div>
 
         <div className="space-y-8">
-          <section className="space-y-3 border border-neutral-950 p-5">
+          <section className="space-y-3 border border-neutral-50 p-5">
             <SectionMark text="DETAILS" />
             <dl className="space-y-2.5">
               <DetailRow label="SALARY" value={app.salary ?? "—"} />
@@ -199,7 +199,7 @@ export default async function ApplicationDetailPage({
                 {appContacts.map((contact) => (
                   <li key={contact.id} className="text-sm">
                     <p className="font-semibold">{contact.name}</p>
-                    <p className="font-mono text-[10px] tracking-[0.14em] text-neutral-400">
+                    <p className="font-mono text-[10px] tracking-[0.14em] text-neutral-500">
                       {[contact.role, contact.email]
                         .filter(Boolean)
                         .join("  ·  ")
@@ -228,7 +228,7 @@ export default async function ApplicationDetailPage({
             </form>
           </section>
 
-          <section className="space-y-3 border-t border-neutral-200 pt-6">
+          <section className="space-y-3 border-t border-neutral-800 pt-6">
             <MonoLabel>DANGER ZONE</MonoLabel>
             <DeleteApplicationButton applicationId={app.id} />
           </section>
@@ -241,7 +241,7 @@ export default async function ApplicationDetailPage({
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
-      <dt className="font-mono text-[10px] tracking-[0.16em] text-neutral-400">
+      <dt className="font-mono text-[10px] tracking-[0.16em] text-neutral-500">
         {label}
       </dt>
       <dd className="text-right text-sm font-medium">{value}</dd>

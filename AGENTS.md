@@ -32,6 +32,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
   `serverExternalPackages` in next.config.ts (Turbopack can't bundle it).
   Features must degrade gracefully when `CURSOR_API_KEY` or Adzuna keys are
   missing.
-- UI style is editorial monochrome (matching cadekukk.vercel.app): no accent
-  colors, square corners, bracketed mono section markers. Shared primitives
-  live in `src/components/editorial.tsx` — use them instead of ad-hoc styles.
+- UI style is editorial monochrome, dark (near-white ink on #0a0a0a): no
+  accent colors, square corners, bracketed mono section markers. Interactive
+  text uses the `.hover-invert` utility (globals.css) — a full
+  highlight-and-invert on hover — never underline hovers. Shared primitives
+  live in `src/components/editorial.tsx`; use them instead of ad-hoc styles.

@@ -39,10 +39,10 @@ export function NavLinks() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`font-mono text-[11px] tracking-[0.18em] transition ${
+            className={`px-2 py-1 font-mono text-[11px] tracking-[0.18em] ${
               active
-                ? "text-neutral-950 underline decoration-2 underline-offset-4"
-                : "text-neutral-400 hover:text-neutral-950"
+                ? "bg-neutral-50 text-neutral-950"
+                : "text-neutral-500 hover-invert"
             }`}
           >
             {label}

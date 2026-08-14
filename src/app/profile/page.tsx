@@ -31,12 +31,12 @@ export default async function ProfilePage() {
       <div className="space-y-2">
         <SectionMark text="SEC. 04 — PROFILE" />
         <h1 className="text-3xl font-bold tracking-tight">{user.name}.</h1>
-        <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-400">
+        <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-500">
           {user.email.toUpperCase()} · SINGLE-USER BUILD
         </p>
       </div>
 
-      <section className="space-y-4 border-t border-neutral-950 pt-6">
+      <section className="space-y-4 border-t border-neutral-50 pt-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <SectionMark text="SEARCH PHRASES" />
           <MonoLabel>EVERY SOURCE IS QUERIED WITH EACH LINE</MonoLabel>
@@ -64,7 +64,7 @@ export default async function ProfilePage() {
         </form>
       </section>
 
-      <section className="space-y-4 border-t border-neutral-950 pt-6">
+      <section className="space-y-4 border-t border-neutral-50 pt-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <SectionMark text="BASE RÉSUMÉ" />
           {master && (
@@ -85,7 +85,7 @@ export default async function ProfilePage() {
             <div className="flex items-center justify-between">
               <Link
                 href="/onboarding"
-                className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
+                className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
               >
                 RE-UPLOAD FROM PDF →
               </Link>
@@ -96,7 +96,7 @@ export default async function ProfilePage() {
           </form>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-neutral-400">
               No base résumé yet — it powers fit analysis, tailoring, Pilot,
               and the autofill extension.
             </p>

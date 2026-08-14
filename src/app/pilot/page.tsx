@@ -46,13 +46,13 @@ export default async function PilotPage({
       <div className="space-y-2">
         <SectionMark text="SEC. 03 — CAREER COPILOT" />
         <h1 className="text-3xl font-bold tracking-tight">Pilot.</h1>
-        <p className="max-w-xl text-sm text-neutral-500">
+        <p className="max-w-xl text-sm text-neutral-400">
           {job ? (
             <>
               Fable 5, grounded in your résumé — with{" "}
               <Link
                 href={`/jobs/${job.id}`}
-                className="underline decoration-2 underline-offset-2"
+                className="hover-invert underline decoration-2 underline-offset-2"
               >
                 {job.title} at {job.company}
               </Link>{" "}
@@ -67,7 +67,7 @@ export default async function PilotPage({
       {!masterResume && (
         <Link
           href="/onboarding"
-          className="block border border-neutral-950 bg-white p-4 text-sm transition hover:bg-neutral-950 hover:text-white"
+          className="block border border-neutral-50 bg-neutral-900 p-4 text-sm transition hover:bg-neutral-50 hover:text-neutral-950"
         >
           <span className="font-mono text-[10px] tracking-[0.18em]">
             [ SETUP REQUIRED ]

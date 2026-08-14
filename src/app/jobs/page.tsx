@@ -143,21 +143,21 @@ export default async function JobsPage({
       <div className="space-y-2">
         <SectionMark text="SEC. 01 — JOB MATCHES" />
         <h1 className="text-3xl font-bold tracking-tight">Matches.</h1>
-        <p className="max-w-xl text-sm text-neutral-500">
+        <p className="max-w-xl text-sm text-neutral-400">
           {savedTab
             ? "Postings you've saved into the tracker."
             : `Live postings from ${estoniaOnly ? "cv.ee" : "Remotive, cv.ee (Estonia), Arbeitnow (EU)" + (process.env.ADZUNA_APP_ID ? ", Adzuna" : "")} for: ${queries.join(" · ")}`}
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-neutral-950 py-3">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-neutral-50 py-3">
         <FilterLink href={buildUrl({ tab: null })} active={!savedTab}>
           RECOMMENDED
         </FilterLink>
         <FilterLink href={buildUrl({ tab: "saved" })} active={savedTab}>
           IN TRACKER
         </FilterLink>
-        <span className="h-4 w-px bg-neutral-300" aria-hidden />
+        <span className="h-4 w-px bg-neutral-700" aria-hidden />
         <FilterLink
           href={buildUrl({ remote: remoteOnly ? null : "1" })}
           active={remoteOnly}
@@ -198,7 +198,7 @@ export default async function JobsPage({
       {!masterResume && (
         <Link
           href="/onboarding"
-          className="block border border-neutral-950 bg-white p-4 text-sm transition hover:bg-neutral-950 hover:text-white"
+          className="block border border-neutral-50 bg-neutral-900 p-4 text-sm transition hover:bg-neutral-50 hover:text-neutral-950"
         >
           <span className="font-mono text-[10px] tracking-[0.18em]">
             [ SETUP REQUIRED ]
@@ -212,12 +212,12 @@ export default async function JobsPage({
           {cursorEnabled() ? (
             <AnalyzeButton jobIds={unanalyzed} />
           ) : (
-            <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-400">
+            <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-500">
               [ SET CURSOR_API_KEY IN .ENV TO ENABLE FABLE 5 FIT ANALYSIS ]
             </p>
           )}
           {analyzedCount > 0 && (
-            <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-400">
+            <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-500">
               {analyzedCount} OF {results.length} ANALYZED — RANKED BY ABSOLUTE
               FIT
             </p>
@@ -226,33 +226,33 @@ export default async function JobsPage({
       )}
 
       {providerErrors.length > 0 && (
-        <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-400">
+        <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-500">
           [ SOURCE ERRORS: {providerErrors.join("; ").toUpperCase()} ]
         </p>
       )}
 
       {results.length === 0 ? (
-        <div className="border border-dashed border-neutral-300 py-16 text-center text-sm text-neutral-400">
+        <div className="border border-dashed border-neutral-700 py-16 text-center text-sm text-neutral-500">
           {savedTab
             ? "Nothing saved yet — save postings from the Recommended tab."
             : "No postings found. Adjust your search phrases on the Profile page."}
         </div>
       ) : (
-        <ol className="border-t border-neutral-950">
+        <ol className="border-t border-neutral-50">
           {results.map((job, i) => (
             <li
               key={job.id}
-              className="group border-b border-neutral-200 py-5 transition hover:bg-white"
+              className="group border-b border-neutral-800 py-5 transition hover:bg-neutral-900"
             >
               <div className="flex items-baseline gap-4">
-                <span className="hidden w-14 shrink-0 font-mono text-[10px] tracking-[0.18em] text-neutral-400 sm:block">
+                <span className="hidden w-14 shrink-0 font-mono text-[10px] tracking-[0.18em] text-neutral-500 sm:block">
                   [ {String(i + 1).padStart(2, "0")} ]
                 </span>
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                     <Link
                       href={`/jobs/${job.id}`}
-                      className="text-lg font-semibold leading-snug tracking-tight hover:underline decoration-2 underline-offset-4"
+                      className="text-lg font-semibold leading-snug tracking-tight hover-invert"
                     >
                       {job.title}
                     </Link>
@@ -261,21 +261,21 @@ export default async function JobsPage({
                         <span
                           className={
                             job.fitScore >= 65
-                              ? "bg-neutral-950 px-2 py-0.5 text-white"
-                              : "text-neutral-950"
+                              ? "bg-neutral-50 px-2 py-0.5 text-neutral-950"
+                              : "text-neutral-50"
                           }
                         >
                           FIT — {job.fitScore}/100
                         </span>
                       ) : (
-                        <span className="text-neutral-300">FIT — PENDING</span>
+                        <span className="text-neutral-700">FIT — PENDING</span>
                       )}
                     </span>
                   </div>
-                  <p className="text-sm font-medium text-neutral-600">
+                  <p className="text-sm font-medium text-neutral-400">
                     {job.company}
                   </p>
-                  <p className="font-mono text-[10px] tracking-[0.16em] text-neutral-400">
+                  <p className="font-mono text-[10px] tracking-[0.16em] text-neutral-500">
                     {[
                       job.location && `LOC — ${job.location.toUpperCase()}`,
                       formatJobSalary(job) &&
@@ -288,7 +288,7 @@ export default async function JobsPage({
                       .join("  ·  ")}
                   </p>
                   {job.fitVerdict && (
-                    <p className="max-w-2xl text-sm italic leading-relaxed text-neutral-600">
+                    <p className="max-w-2xl text-sm italic leading-relaxed text-neutral-400">
                       “{job.fitVerdict}”
                     </p>
                   )}
@@ -302,14 +302,14 @@ export default async function JobsPage({
                         href={job.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
+                        className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
                       >
                         APPLY ↗
                       </a>
                     )}
                     <Link
                       href={`/jobs/${job.id}`}
-                      className="font-mono text-[11px] tracking-[0.14em] text-neutral-400 transition hover:text-neutral-950"
+                      className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
                     >
                       DETAILS →
                     </Link>
@@ -336,10 +336,10 @@ function FilterLink({
   return (
     <Link
       href={href}
-      className={`font-mono text-[11px] tracking-[0.18em] transition ${
+      className={`px-2 py-1 font-mono text-[11px] tracking-[0.18em] ${
         active
-          ? "bg-neutral-950 px-2 py-1 text-white"
-          : "text-neutral-400 hover:text-neutral-950"
+          ? "bg-neutral-50 text-neutral-950"
+          : "text-neutral-500 hover-invert"
       }`}
     >
       {children}
