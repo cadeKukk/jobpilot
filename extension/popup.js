@@ -148,9 +148,9 @@ function renderReady(profile, syncedAt, fieldCount, active) {
     btn.disabled = true;
     try {
       const tab = await getActiveTab();
-      const res = await messageTab(tab.id, { type: "EXTRACT_JOB" });
-      const job = res && res.job;
-      if (!res) {
+      const reply = await messageTab(tab.id, { type: "EXTRACT_JOB" });
+      const job = reply && reply.job;
+      if (!reply) {
         // An outdated content script is still running in this tab.
         throw new Error("Page reader is outdated — refresh the page and try again.");
       }
