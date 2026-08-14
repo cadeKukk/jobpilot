@@ -148,7 +148,12 @@ function renderReady(profile, syncedAt, fieldCount, active) {
     btn.disabled = true;
     try {
       const tab = await getActiveTab();
-      const { job } = await messageTab(tab.id, { type: "EXTRACT_JOB" });
+      const res = await messageTab(tab.id, { type: "EXTRACT_JOB" });
+      const job = res && res.job;
+      if (!res) {
+        // An outdated content script is still running in this tab.
+        throw new Error("Page reader is outdated — refresh the page and try again.");
+      }
       if (!job?.title || !job?.company) {
         throw new Error("Couldn't read a job posting from this page.");
       }

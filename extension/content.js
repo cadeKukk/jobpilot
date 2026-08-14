@@ -2,8 +2,12 @@
 // fills them from the synced JobPilot profile. Injected automatically on
 // known ATS sites, or on demand from the popup on any other page.
 (() => {
-  if (window.__jobpilotAutofill) return;
-  window.__jobpilotAutofill = true;
+  // Version guard: re-running the same version is a no-op, but a newer
+  // script injected into a tab that still has an old one takes over
+  // (its listeners handle message types the old one doesn't know).
+  const VERSION = "0.3.1";
+  if (window.__jobpilotAutofill === VERSION) return;
+  window.__jobpilotAutofill = VERSION;
 
   const EMERALD = "#059669";
 
@@ -380,9 +384,26 @@
     return el?.content?.trim() || null;
   }
 
-  // Page text including open shadow roots (SR-style pages render everything
-  // in components, leaving document.body.innerText nearly empty).
+  // Page text for the description: prefer the main content region (skips
+  // nav/footer chrome), then the whole body, then open shadow roots
+  // (SR-style pages render everything in components, leaving
+  // document.body.innerText nearly empty).
   function deepText() {
+    for (const sel of ["main", "article", '[role="main"]', "#main-content"]) {
+      const region = document.querySelector(sel);
+      const text = region?.innerText?.trim() ?? "";
+      if (text.length >= 400) return text.replace(/\n{3,}/g, "\n\n").slice(0, 25_000);
+    }
+    // No landmarks (cv.ee et al.): the h1 is the job title — climb until the
+    // subtree around it has substantial text. That's the posting card,
+    // without the site's nav/footer chrome.
+    let node = document.querySelector("h1");
+    while (node && node.parentElement && node.parentElement !== document.body) {
+      node = node.parentElement;
+      const text = node.innerText?.trim() ?? "";
+      if (text.length >= 800)
+        return text.replace(/\n{3,}/g, "\n\n").slice(0, 25_000);
+    }
     let text = document.body.innerText ?? "";
     if (text.length < 400) {
       for (const root of collectRoots(document, [])) {
@@ -395,11 +416,18 @@
   function extractJob() {
     const posting = jsonLdJobPosting();
     if (posting) {
+      // Some boards (cv.ee among them) publish JSON-LD with an empty
+      // description — fall back to the visible page text in that case.
+      const ldDescription = String(posting.description ?? "").trim();
       return {
         title: posting.title ?? posting.name ?? null,
-        company: posting.hiringOrganization?.name ?? null,
+        company:
+          posting.hiringOrganization?.name ??
+          posting.identifier?.name ??
+          null,
         location: jsonLdLocation(posting),
-        description: posting.description ?? null, // HTML — stripped server-side
+        description:
+          ldDescription.length >= 120 ? ldDescription : deepText(),
         salaryText: jsonLdSalary(posting),
         postedAt: posting.datePosted ?? null,
         url: location.href,

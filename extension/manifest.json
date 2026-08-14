@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "JobPilot Autofill",
   "description": "Autofill job applications with your JobPilot profile and resume.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "permissions": ["storage", "activeTab", "scripting"],
   "host_permissions": ["http://localhost:3000/*"],
   "background": {
@@ -40,7 +40,10 @@
         "https://wellfound.com/*",
         "https://*.recruitee.com/*",
         "https://*.breezy.hr/*",
-        "https://remotive.com/*"
+        "https://remotive.com/*",
+        "https://www.cv.ee/*",
+        "https://cv.ee/*",
+        "https://www.arbeitnow.com/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"

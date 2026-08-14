@@ -4,6 +4,21 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Fixed — Job capture on cv.ee (extension v0.3.1)
+
+- cv.ee publishes JSON-LD `JobPosting` with an **empty description** — the
+  extractor now falls back to the visible posting text when the structured
+  description is missing or trivially short. Since cv.ee has no `main`/
+  `article` landmarks, the fallback climbs up from the `h1` (job title)
+  until it finds the posting card, skipping nav/footer chrome. Company
+  name also falls back to JSON-LD `identifier.name` (cv.ee's location for
+  it). Verified against a live cv.ee posting: clean 3.8k-char description.
+- "Cannot destructure property 'job'" popup error fixed: it happened when
+  a tab still ran an older injected content script without the capture
+  handler. The content script is now version-guarded (a newer injection
+  takes over) and the popup shows "refresh the page and try again" instead
+  of crashing. cv.ee and Arbeitnow added to auto-inject domains.
+
 ### Added — Capture jobs from any page via the extension
 
 - Extension v0.3.0: a **Save this job to JobPilot** button in the popup
