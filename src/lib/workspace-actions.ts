@@ -10,6 +10,7 @@ import {
   jobs,
 } from "@/db/schema";
 import { currentModelLabel, cursorEnabled, generateText } from "@/lib/cursor-ai";
+import { extractPostingKeywords } from "@/lib/jobs";
 import { getMasterResume } from "@/lib/resume";
 import { formatJobSalary } from "@/lib/status";
 import { getCurrentUser } from "@/lib/user";
@@ -64,7 +65,7 @@ const REVISE_RULES: Record<string, string> = {
   resume: `You are revising a tailored resume for a specific job application.
 Hard rules:
 - NEVER invent experience, skills, employers, titles, dates, or credentials that are not in the candidate's BASE RESUME. You may add, remove, reorder, reword, emphasize, and quantify — but only from what's really there.
-- Where the instruction asks for a keyword the candidate genuinely has experience with, mirror the posting's terminology.
+- KEYWORD MAXIMIZATION: a POSTING KEYWORDS list is provided. Unless the instruction says otherwise, preserve existing keyword coverage and work in any still-missing keywords the candidate can honestly claim, using the posting's exact terminology.
 - Keep clean plain-text structure: SECTION HEADINGS in caps, bullets starting with "- ".`,
   cover_letter: `You are revising a cover letter for a specific job application.
 Hard rules:
@@ -100,6 +101,11 @@ export async function reviseDocument(
     return { ok: false, error: "Add your base resume first (Profile page)." };
   }
 
+  const keywords = extractPostingKeywords(
+    app.jobDescription ?? app.jobTitle,
+    app.jobTitle
+  );
+
   let revised: string;
   try {
     revised = await generateText(
@@ -107,10 +113,15 @@ export async function reviseDocument(
       [
         `CANDIDATE'S BASE RESUME (source of truth — nothing beyond this may be claimed):\n${baseResume.content.slice(0, 12_000)}`,
         `TARGET JOB:\nRole: ${app.jobTitle}\nCompany: ${app.company}${app.jobDescription ? `\nDescription:\n${app.jobDescription.slice(0, 8_000)}` : ""}`,
+        keywords.length > 0
+          ? `POSTING KEYWORDS (maximize honest coverage):\n${keywords.join(", ")}`
+          : null,
         `CURRENT DRAFT:\n${currentDraft.slice(0, 12_000)}`,
         `INSTRUCTION FROM THE CANDIDATE:\n${instruction.slice(0, 1_000)}`,
         `Apply the instruction to the current draft. Output ONLY the complete revised document text — no commentary, no markdown fences.`,
-      ].join("\n\n---\n\n")
+      ]
+        .filter(Boolean)
+        .join("\n\n---\n\n")
     );
   } catch (err) {
     console.error("Revision failed:", err);

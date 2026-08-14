@@ -30,6 +30,11 @@ export default async function DocumentPage({
   });
   if (!app) notFound();
 
+  const title =
+    doc.kind === "resume"
+      ? `Résumé — ${app.jobTitle} at ${app.company}`
+      : `Cover letter — ${app.jobTitle} at ${app.company}`;
+
   // Compact, professional print output: collapse extra blank lines and
   // trim trailing whitespace from each line.
   const content = doc.content
@@ -54,8 +59,10 @@ export default async function DocumentPage({
       {/* Rendered as a white "paper" artifact so it reads as a document
           on the dark UI and prints black-on-white. */}
       <div className="border border-neutral-50 bg-white p-8 print:border-0 print:p-0">
-        <p className="mb-5 text-right font-mono text-[9px] tracking-[0.16em] text-neutral-400 print:mb-4">
-          {formatDate(doc.createdAt).toUpperCase()}
+        {/* On screen: title · date. In the printed PDF: just the date. */}
+        <p className="mb-5 flex items-baseline justify-between gap-4 font-mono text-[9px] tracking-[0.16em] text-neutral-400 print:mb-4 print:justify-end">
+          <span className="print:hidden">{title.toUpperCase()}</span>
+          <span>{formatDate(doc.createdAt).toUpperCase()}</span>
         </p>
         <pre className="whitespace-pre-wrap font-sans text-[13px] leading-[1.45] text-neutral-950 print:text-[11px] print:leading-[1.35]">
           {content}

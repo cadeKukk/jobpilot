@@ -4,10 +4,23 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Keyword maximization at the tailor stage
+
+- Initial tailoring now feeds the posting's extracted keywords into the
+  Fable prompt with an explicit rule: work EVERY keyword the candidate can
+  honestly claim into the résumé, mirroring the posting's exact
+  terminology. Fabrication guardrails unchanged — keywords with no honest
+  support in the base résumé are skipped.
+- Freeform revisions get the same keyword list and preserve/extend
+  coverage unless instructed otherwise.
+- Measured on a live posting: coverage rose from 14/24 to 19/24 keywords
+  (the 5 skipped had no honest basis, e.g. the employer's own name).
+
 ### Changed — Compact, professional PDF output
 
-- The document header now shows only the date (no "GENERATED" label or
-  title line), small and right-aligned, in print too.
+- On screen the document header shows the title and date (e.g.
+  "COVER LETTER — DATA ENGINEER AT PLAYTECH · AUG 14, 2026"); the
+  "GENERATED" label is gone. In the printed PDF only the date appears.
 - Tighter print typography (11px / 1.35 line height), collapsed extra blank
   lines and trailing whitespace, standard 0.6–0.7in page margins, and no
   app padding on the printed page.

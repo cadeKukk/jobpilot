@@ -9,6 +9,7 @@ import {
   generatedDocuments,
 } from "@/db/schema";
 import { cursorEnabled, currentModelLabel, generateJSON } from "@/lib/cursor-ai";
+import { extractPostingKeywords } from "@/lib/jobs";
 import { getMasterResume } from "@/lib/resume";
 import { getCurrentUser } from "@/lib/user";
 
@@ -17,7 +18,7 @@ You tailor an existing resume and write a cover letter for a specific job postin
 
 Hard rules:
 - NEVER invent experience, skills, employers, titles, dates, or credentials that are not in the candidate's resume. You may only reword, reorder, emphasize, and quantify what is already there.
-- Mirror terminology from the job description where the candidate genuinely has the experience.
+- KEYWORD MAXIMIZATION: a POSTING KEYWORDS list is provided. Work EVERY keyword the candidate can honestly claim into the resume, using the posting's exact terminology (e.g. write "PostgreSQL" if the posting says PostgreSQL and the candidate has it). Sweep the entire resume — skills, bullets, summary — for honest matches, including transferable ones. Only skip a keyword when nothing in the resume genuinely supports it.
 - Resume: keep a clean plain-text structure (SECTION HEADINGS in caps, bullet points starting with "- "). Lead bullets with impact.
 - Cover letter: 3 short paragraphs, professional but warm, no clichés like "I am writing to express". Address the specific company and role. Plain text.`;
 
@@ -53,16 +54,24 @@ export async function generateTailoredDocuments(
     return { ok: false, error: "Add a master resume in onboarding first." };
   }
 
+  const keywords = extractPostingKeywords(
+    app.jobDescription ?? app.jobTitle,
+    app.jobTitle
+  );
+
   const jobInfo = [
     `Role: ${app.jobTitle}`,
     `Company: ${app.company}`,
     app.location ? `Location: ${app.location}` : null,
+    keywords.length > 0
+      ? `POSTING KEYWORDS (maximize honest coverage of these in the resume):\n${keywords.join(", ")}`
+      : null,
     app.jobDescription
       ? `Job description:\n${app.jobDescription.slice(0, 12_000)}`
       : "No job description available — tailor to the role title and company.",
   ]
     .filter(Boolean)
-    .join("\n");
+    .join("\n\n");
 
   let parsed: { tailored_resume: string; cover_letter: string };
   try {
