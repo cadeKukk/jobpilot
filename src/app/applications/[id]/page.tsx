@@ -94,7 +94,15 @@ export default async function ApplicationDetailPage({
       <div className="grid gap-10 lg:grid-cols-3">
         <div className="space-y-8 lg:col-span-2">
           <section className="space-y-4">
-            <SectionMark text="TAILORED DOCUMENTS — FABLE 5" />
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <SectionMark text="TAILORED DOCUMENTS — FABLE 5" />
+              <Link
+                href={`/applications/${app.id}/tailor`}
+                className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
+              >
+                OPEN TAILORING WORKSPACE →
+              </Link>
+            </div>
             {!aiEnabled ? (
               <p className="text-sm text-neutral-400">
                 Set <code className="bg-neutral-800 px-1">CURSOR_API_KEY</code>{" "}

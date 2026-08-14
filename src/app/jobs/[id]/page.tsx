@@ -4,7 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { applications, jobs } from "@/db/schema";
 import { AnalyzeButton } from "@/components/analyze-button";
-import { MonoLabel, SectionMark, btnOutline, btnSolid } from "@/components/editorial";
+import { ApplyButton } from "@/components/apply-button";
+import { MonoLabel, SectionMark, btnOutline } from "@/components/editorial";
 import { SaveJobButton } from "@/components/save-job-button";
 import { cursorEnabled } from "@/lib/cursor-ai";
 import { missingKeywords, sharedKeywords } from "@/lib/jobs";
@@ -81,20 +82,21 @@ export default async function JobDetailPage({
           )}
         </div>
         <div className="flex flex-wrap items-center gap-3 pt-2">
+          <ApplyButton jobId={job.id} />
+          <Link href={`/pilot?job=${job.id}`} className={btnOutline}>
+            ASK PILOT
+          </Link>
+          <SaveJobButton jobId={job.id} saved={!!savedApplication} />
           {job.url && (
             <a
               href={job.url}
               target="_blank"
               rel="noopener noreferrer"
-              className={btnSolid}
+              className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
             >
-              APPLY ↗
+              VIEW POSTING ↗
             </a>
           )}
-          <Link href={`/pilot?job=${job.id}`} className={btnOutline}>
-            ASK PILOT
-          </Link>
-          <SaveJobButton jobId={job.id} saved={!!savedApplication} />
         </div>
       </div>
 

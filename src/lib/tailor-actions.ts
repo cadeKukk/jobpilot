@@ -22,7 +22,10 @@ Hard rules:
 - Cover letter: 3 short paragraphs, professional but warm, no clichés like "I am writing to express". Address the specific company and role. Plain text.`;
 
 type TailorResult =
-  | { ok: true }
+  | {
+      ok: true;
+      docs: Array<{ id: string; kind: string; content: string; model: string | null }>;
+    }
   | { ok: false; error: string };
 
 export async function generateTailoredDocuments(
@@ -79,20 +82,23 @@ export async function generateTailoredDocuments(
 
   const model = await currentModelLabel();
 
-  await db.insert(generatedDocuments).values([
-    {
-      applicationId: app.id,
-      kind: "resume",
-      content: parsed.tailored_resume,
-      model,
-    },
-    {
-      applicationId: app.id,
-      kind: "cover_letter",
-      content: parsed.cover_letter,
-      model,
-    },
-  ]);
+  const docs = await db
+    .insert(generatedDocuments)
+    .values([
+      {
+        applicationId: app.id,
+        kind: "resume",
+        content: parsed.tailored_resume,
+        model,
+      },
+      {
+        applicationId: app.id,
+        kind: "cover_letter",
+        content: parsed.cover_letter,
+        model,
+      },
+    ])
+    .returning();
 
   await db.insert(applicationEvents).values({
     applicationId: app.id,
@@ -101,5 +107,13 @@ export async function generateTailoredDocuments(
   });
 
   revalidatePath(`/applications/${app.id}`);
-  return { ok: true };
+  return {
+    ok: true,
+    docs: docs.map((d) => ({
+      id: d.id,
+      kind: d.kind,
+      content: d.content,
+      model: d.model,
+    })),
+  };
 }

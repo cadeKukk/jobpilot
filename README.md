@@ -17,9 +17,12 @@ the owner's workspace.
 - **Fable 5 fit analysis** — the model reads the base résumé and each
   posting, then returns an *absolute* 0–100 fit score, a blunt one-line
   verdict, strengths, and gaps. Cached per job, batch-analyzed on demand
-- **Résumé & cover letter tailoring** — one click per application generates
-  documents tailored to that posting from the base résumé (strict
-  no-fabrication prompt), with copy and print-to-PDF
+- **Tailoring workspace** — APPLY on a job auto-drafts a tailored résumé +
+  cover letter, then lets you iterate: freeform instructions to Fable
+  ("rephrase this bullet", "cut that section"), direct manual editing, live
+  keyword coverage against the posting, and full version history — strict
+  no-fabrication throughout, with print-to-PDF and the company site one
+  click away
 - **Pilot copilot** — chat grounded in the résumé and (optionally) a specific
   posting: interview prep, gap advice, Estonia relocation strategy
 - **Application tracker** — saved → applied → interviewing → offer pipeline

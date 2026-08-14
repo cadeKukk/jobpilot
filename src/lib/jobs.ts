@@ -302,6 +302,31 @@ export function sharedKeywords(resumeText: string, job: Job): string[] {
   return shared.slice(0, 14);
 }
 
+// The posting's most important terms (by frequency + title presence),
+// used by the tailoring workspace to track live keyword coverage.
+export function extractPostingKeywords(
+  description: string,
+  title: string
+): string[] {
+  const counts = new Map<string, number>();
+  for (const term of tokenize(description)) {
+    if (term.length >= 4) counts.set(term, (counts.get(term) ?? 0) + 1);
+  }
+  const titleTerms = new Set(tokenize(title).filter((t) => t.length >= 4));
+
+  return [...counts.entries()]
+    .filter(([term, n]) => n >= 2 || titleTerms.has(term))
+    .sort((a, b) => {
+      // Title terms first, then by frequency.
+      const aTitle = titleTerms.has(a[0]) ? 1 : 0;
+      const bTitle = titleTerms.has(b[0]) ? 1 : 0;
+      if (aTitle !== bTitle) return bTitle - aTitle;
+      return b[1] - a[1];
+    })
+    .slice(0, 24)
+    .map(([term]) => term);
+}
+
 // Frequent job-posting terms missing from the resume.
 export function missingKeywords(resumeText: string, job: Job): string[] {
   const resumeTerms = new Set(tokenize(resumeText));

@@ -4,6 +4,25 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Tailoring workspace: APPLY → draft → iterate → apply
+
+- **New APPLY flow**: on a job page, APPLY now saves the job to the tracker
+  and opens `/applications/[id]/tailor` — the tailoring workspace — where
+  Fable 5 auto-drafts a tailored résumé and cover letter before you apply
+  on the company site (button stays one click away).
+- **Freeform revisions**: an instruction bar sends plain-language edits
+  ("emphasize the AI ambassador work", "remove the Wooster section") to
+  Fable, which may add, remove, or rephrase — but only from what's really
+  in the base résumé. The draft is also directly editable by hand.
+- **Live keyword coverage**: the posting's key terms
+  (`extractPostingKeywords`) are checked against the current draft as you
+  type, with a covered/missing list and progress rule.
+- **Version history**: every Fable revision and manual save is stored in
+  `generated_documents`; any version can be reloaded into the editor.
+  Résumé and cover letter share the workspace as tabs.
+- The application page links to the workspace; the job page keeps a ghost
+  "VIEW POSTING ↗" link next to the new APPLY button.
+
 ### Changed — Dark inversion + universal hover-invert
 
 - **Inverted palette**: the editorial theme is now near-white ink on
