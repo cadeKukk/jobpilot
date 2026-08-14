@@ -65,6 +65,43 @@ export function TailorWorkspace({
   const latest = tabVersions[0];
   const dirty = latest ? draft !== latest.content : draft.trim().length > 0;
 
+  // Generate (or regenerate) both documents with Fable. Previous drafts are
+  // never lost — every generation lands as new versions in the history.
+  function generateBoth(kind: "initial" | "redo") {
+    if (isPending) return;
+    setError(null);
+    setStatus(
+      kind === "redo"
+        ? "FABLE 5 IS REDOING BOTH DOCUMENTS FROM SCRATCH…"
+        : "FABLE 5 IS DRAFTING YOUR TAILORED RÉSUMÉ + COVER LETTER…"
+    );
+    startTransition(async () => {
+      const res = await generateTailoredDocuments(applicationId);
+      if (res.ok) {
+        const now = new Date().toISOString();
+        const created: Version[] = res.docs.map((d) => ({
+          id: d.id,
+          kind: d.kind as Kind,
+          content: d.content,
+          model: d.model,
+          createdAt: now,
+        }));
+        setVersions((v) => [...created, ...v]);
+        setDrafts({
+          resume:
+            created.find((d) => d.kind === "resume")?.content ??
+            baseResumeContent,
+          cover_letter:
+            created.find((d) => d.kind === "cover_letter")?.content ?? "",
+        });
+        setStatus(null);
+      } else {
+        setStatus(null);
+        setError(res.error);
+      }
+    });
+  }
+
   // First visit after APPLY: no documents yet — auto-generate both drafts.
   useEffect(() => {
     if (
@@ -74,32 +111,7 @@ export function TailorWorkspace({
       initialVersions.length === 0
     ) {
       generatedOnce.current = true;
-      setStatus("FABLE 5 IS DRAFTING YOUR TAILORED RÉSUMÉ + COVER LETTER…");
-      startTransition(async () => {
-        const res = await generateTailoredDocuments(applicationId);
-        if (res.ok) {
-          const now = new Date().toISOString();
-          const created: Version[] = res.docs.map((d) => ({
-            id: d.id,
-            kind: d.kind as Kind,
-            content: d.content,
-            model: d.model,
-            createdAt: now,
-          }));
-          setVersions((v) => [...created, ...v]);
-          setDrafts({
-            resume:
-              created.find((d) => d.kind === "resume")?.content ??
-              baseResumeContent,
-            cover_letter:
-              created.find((d) => d.kind === "cover_letter")?.content ?? "",
-          });
-          setStatus(null);
-        } else {
-          setStatus(null);
-          setError(res.error);
-        }
-      });
+      generateBoth("initial");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -203,6 +215,17 @@ export function TailorWorkspace({
           ))}
         </div>
         <div className="flex flex-wrap items-center gap-4">
+          {aiEnabled && hasResume && (
+            <button
+              type="button"
+              onClick={() => generateBoth("redo")}
+              disabled={isPending}
+              title="Regenerate the résumé and cover letter from scratch — current drafts stay in version history"
+              className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert disabled:opacity-40"
+            >
+              ↺ REDO BOTH
+            </button>
+          )}
           {latest && (
             <Link
               href={`/documents/${latest.id}`}

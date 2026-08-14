@@ -4,6 +4,13 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Redo generation in the tailoring workspace
+
+- New **↺ REDO BOTH** button in the workspace toolbar regenerates the
+  résumé and cover letter from scratch (same keyword-maximizing prompt).
+  Current drafts are never lost — every generation lands as new versions
+  in the history, so any earlier draft can be reloaded.
+
 ### Fixed — Job capture on cv.ee (extension v0.3.1)
 
 - cv.ee publishes JSON-LD `JobPosting` with an **empty description** — the
