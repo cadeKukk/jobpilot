@@ -4,6 +4,23 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Apply with tailored résumé → Chrome extension handoff
+
+- The tailoring workspace's apply button is now **APPLY WITH TAILORED
+  RÉSUMÉ ↗**: it snapshots the current drafts (unsaved edits are saved as
+  versions), records the application as the active extension handoff, logs
+  it in the activity feed, and opens the real apply link in a new tab.
+- New `GET /api/extension/active` returns the handed-off job's latest
+  tailored résumé + cover letter; handoffs expire after 12 hours so a stale
+  cover letter never lands in the wrong form.
+- Extension v0.2.0: a background service worker fetches the handoff (ATS
+  pages block localhost from content scripts); autofill then fills
+  cover-letter boxes with the tailored cover letter and "paste your résumé"
+  boxes with the tailored résumé. The floating button reads
+  "Autofill — tailored for {company}" and the popup shows which job is
+  armed. With no handoff, everything falls back to the generic profile.
+- Schema: `user_preferences.active_application_id` + `active_handoff_at`.
+
 ### Added — Keyword maximization at the tailor stage
 
 - Initial tailoring now feeds the posting's extracted keywords into the

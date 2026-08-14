@@ -30,12 +30,48 @@
       match: /current (title|role|position)|job title|desired (role|position)|headline/i,
     },
     {
+      // Filled with the tailored cover letter when a handoff is active,
+      // falling back to the generic summary.
+      key: "coverLetter",
+      textareaOnly: true,
+      match: /cover letter|why .{0,40}(join|interested|apply|excited|company|role)/i,
+    },
+    {
+      // "Paste your résumé" boxes get the tailored résumé text.
+      key: "resumeText",
+      textareaOnly: true,
+      match: /(paste|copy|enter|type).{0,24}(resume|résumé|cv)\b|(resume|résumé|cv).{0,10}(text|body)/i,
+    },
+    {
       key: "summary",
       textareaOnly: true,
-      match:
-        /cover letter|why .{0,40}(join|interested|apply|excited|company|role)|about (you|yourself)|summary|additional information|anything else/i,
+      match: /about (you|yourself)|summary|additional information|anything else/i,
     },
   ];
+
+  // Latest "apply with tailored résumé" handoff from the JobPilot app,
+  // fetched via the background worker (content scripts can't hit localhost).
+  function requestActive() {
+    return new Promise((resolve) => {
+      try {
+        chrome.runtime.sendMessage({ type: "GET_ACTIVE" }, (res) => {
+          if (chrome.runtime.lastError) return resolve(null);
+          resolve(res?.active ?? null);
+        });
+      } catch {
+        resolve(null);
+      }
+    });
+  }
+
+  function mergeTailored(profile, active) {
+    if (!active) return profile;
+    return {
+      ...profile,
+      coverLetter: active.coverLetter || null,
+      resumeText: active.resume || null,
+    };
+  }
 
   function fieldText(el) {
     const parts = [
@@ -132,7 +168,9 @@
     for (const el of candidates()) {
       if (el.value && el.value.trim()) continue; // never overwrite
       const key = matchKey(el);
-      const value = key && profile[key];
+      let value = key && profile[key];
+      // No tailored cover letter armed → generic summary still works.
+      if (key === "coverLetter" && !value) value = profile.summary;
       if (!value) continue;
       setValue(el, value);
       flash(el);
@@ -167,15 +205,17 @@
   }
 
   function fillFromStorage() {
-    chrome.storage.local.get("profile", ({ profile }) => {
+    chrome.storage.local.get("profile", async ({ profile }) => {
       if (!profile) {
         toast("JobPilot: open the extension and sync your profile first.");
         return;
       }
-      const filled = fill(profile);
+      const active = await requestActive();
+      const filled = fill(mergeTailored(profile, active));
+      const tailoredNote = active ? ` — tailored for ${active.company}` : "";
       toast(
         filled > 0
-          ? `JobPilot filled ${filled} field${filled === 1 ? "" : "s"}.`
+          ? `JobPilot filled ${filled} field${filled === 1 ? "" : "s"}${tailoredNote}.`
           : "JobPilot: no empty matching fields found."
       );
     });
@@ -194,6 +234,12 @@
         <circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
       </svg>
       <span>Autofill with JobPilot</span>`;
+    // If a tailored handoff is armed, say so on the button itself.
+    requestActive().then((active) => {
+      if (active && fab) {
+        fab.querySelector("span").textContent = `Autofill — tailored for ${active.company}`;
+      }
+    });
     Object.assign(fab.style, {
       position: "fixed",
       bottom: "24px",
@@ -226,8 +272,18 @@
   }).observe(document.body, { childList: true, subtree: true });
 
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    if (msg.type === "SCAN") sendResponse({ count: scan() });
-    if (msg.type === "FILL") sendResponse({ filled: fill(msg.profile) });
+    if (msg.type === "SCAN") {
+      sendResponse({ count: scan() });
+      return false;
+    }
+    if (msg.type === "FILL") {
+      // The popup merges tailored docs in already, but merge here too in
+      // case the popup is an older version.
+      requestActive().then((active) => {
+        sendResponse({ filled: fill(mergeTailored(msg.profile, active)) });
+      });
+      return true; // async response
+    }
     return false;
   });
 })();

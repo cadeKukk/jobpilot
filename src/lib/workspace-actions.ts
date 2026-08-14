@@ -8,6 +8,7 @@ import {
   applications,
   generatedDocuments,
   jobs,
+  userPreferences,
 } from "@/db/schema";
 import { currentModelLabel, cursorEnabled, generateText } from "@/lib/cursor-ai";
 import { extractPostingKeywords } from "@/lib/jobs";
@@ -163,4 +164,71 @@ export async function saveDocumentVersion(
 
   revalidatePath(`/applications/${applicationId}`);
   return { ok: true, docId: doc.id };
+}
+
+// "Apply with tailored résumé": snapshot the current drafts (so unsaved edits
+// aren't lost), mark this application as the active extension handoff, and
+// bump the tracker status. The Chrome extension then autofills apply pages
+// with these exact documents.
+export async function handoffToExtension(
+  applicationId: string,
+  resumeDraft: string,
+  coverLetterDraft: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const user = await getCurrentUser();
+
+  const app = await db.query.applications.findFirst({
+    where: and(
+      eq(applications.id, applicationId),
+      eq(applications.userId, user.id)
+    ),
+    columns: { id: true },
+  });
+  if (!app) return { ok: false, error: "Application not found." };
+
+  // Persist any draft that differs from its latest stored version.
+  const stored = await db.query.generatedDocuments.findMany({
+    where: eq(generatedDocuments.applicationId, applicationId),
+    orderBy: (d, { desc }) => [desc(d.createdAt)],
+  });
+  for (const [kind, draft] of [
+    ["resume", resumeDraft],
+    ["cover_letter", coverLetterDraft],
+  ] as const) {
+    const latest = stored.find((d) => d.kind === kind);
+    if (draft.trim() && draft.trim() !== latest?.content.trim()) {
+      await db.insert(generatedDocuments).values({
+        applicationId,
+        kind,
+        content: draft.trim(),
+        model: "manual",
+      });
+    }
+  }
+
+  await db
+    .insert(userPreferences)
+    .values({
+      userId: user.id,
+      activeApplicationId: applicationId,
+      activeHandoffAt: new Date(),
+    })
+    .onConflictDoUpdate({
+      target: userPreferences.userId,
+      set: {
+        activeApplicationId: applicationId,
+        activeHandoffAt: new Date(),
+        updatedAt: new Date(),
+      },
+    });
+
+  await db.insert(applicationEvents).values({
+    applicationId,
+    type: "note",
+    note: "Sent tailored documents to the Chrome extension and opened the apply page",
+  });
+
+  revalidatePath(`/applications/${applicationId}`);
+  revalidatePath("/");
+  return { ok: true };
 }

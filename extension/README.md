@@ -29,11 +29,19 @@ master resume.
 - **Profile source** — `GET /api/extension/profile` in the app returns
   your contact details (phone/LinkedIn/GitHub/website are extracted from
   your master resume) using your existing session cookie.
+- **Tailored handoff** — clicking **APPLY WITH TAILORED RÉSUMÉ** in a
+  tailoring workspace snapshots the current drafts, marks that application
+  as the active handoff, and opens the apply page. For the next 12 hours,
+  autofill uses those exact documents: cover-letter boxes get the tailored
+  cover letter, "paste your résumé" boxes get the tailored résumé, the
+  floating button reads "Autofill — tailored for {company}", and the popup
+  shows which job is armed. The background worker fetches the handoff from
+  `GET /api/extension/active` (content scripts can't reach localhost).
 
-Resume file uploads can't be automated by extensions — download your
-tailored resume from JobPilot and attach it manually.
+Resume file uploads can't be automated by extensions — use **PRINT / PDF**
+in the workspace to save the tailored resume and attach it manually.
 
 ## Pointing at production
 
-Update `APP_URL` in `popup.js` and the `host_permissions` entry in
-`manifest.json` to your deployed app URL.
+Update `APP_URL` in `popup.js` and `background.js`, and the
+`host_permissions` entry in `manifest.json`, to your deployed app URL.

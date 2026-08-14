@@ -49,6 +49,17 @@ async function messageTab(tabId, msg) {
   }
 }
 
+// Latest "apply with tailored résumé" handoff, if any (null when stale).
+async function fetchActive() {
+  try {
+    const res = await fetch(`${APP_URL}/api/extension/active`);
+    if (!res.ok) return null;
+    return (await res.json()).active ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function syncProfile() {
   const res = await fetch(`${APP_URL}/api/extension/profile`, {
     credentials: "include",
@@ -70,7 +81,7 @@ function renderSignedOut(message) {
   document.getElementById("retry").addEventListener("click", init);
 }
 
-function renderReady(profile, syncedAt, fieldCount) {
+function renderReady(profile, syncedAt, fieldCount, active) {
   const filledKeys = Object.values(profile).filter(Boolean).length;
   app.replaceChildren(
     el(`
@@ -81,6 +92,16 @@ function renderReady(profile, syncedAt, fieldCount) {
           <div class="sub">${profile.email || ""}</div>
         </div>
       </div>`),
+    ...(active
+      ? [
+          el(`
+            <div class="card tailored">
+              <div class="k">[ TAILORED DOCS ARMED ]</div>
+              <div class="job">${active.jobTitle} — ${active.company}</div>
+              <div class="sub">handed off ${timeAgo(active.handedOffAt)} · autofill uses this résumé + cover letter</div>
+            </div>`),
+        ]
+      : []),
     el(`
       <div class="card status">
         <span class="dot ${fieldCount > 0 ? "on" : ""}"></span>
@@ -105,8 +126,11 @@ function renderReady(profile, syncedAt, fieldCount) {
   document.getElementById("fill").addEventListener("click", async () => {
     const tab = await getActiveTab();
     const result = document.getElementById("result");
+    const merged = active
+      ? { ...profile, coverLetter: active.coverLetter, resumeText: active.resume }
+      : profile;
     try {
-      const res = await messageTab(tab.id, { type: "FILL", profile });
+      const res = await messageTab(tab.id, { type: "FILL", profile: merged });
       result.textContent =
         res.filled > 0
           ? `Filled ${res.filled} field${res.filled === 1 ? "" : "s"} ✓`
@@ -145,17 +169,22 @@ async function init() {
   }
 
   let fieldCount = null;
+  let active = null;
   try {
     const tab = await getActiveTab();
-    if (tab?.id && /^https?:/.test(tab.url || "")) {
-      const res = await messageTab(tab.id, { type: "SCAN" });
-      fieldCount = res?.count ?? null;
-    }
+    const [scanRes, activeRes] = await Promise.all([
+      tab?.id && /^https?:/.test(tab.url || "")
+        ? messageTab(tab.id, { type: "SCAN" }).catch(() => null)
+        : null,
+      fetchActive(),
+    ]);
+    fieldCount = scanRes?.count ?? null;
+    active = activeRes;
   } catch {
     fieldCount = null;
   }
 
-  renderReady(profile, syncedAt, fieldCount);
+  renderReady(profile, syncedAt, fieldCount, active);
 }
 
 init();

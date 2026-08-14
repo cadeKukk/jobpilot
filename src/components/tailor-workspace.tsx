@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { MonoLabel, btnOutline, btnSolid } from "@/components/editorial";
 import { generateTailoredDocuments } from "@/lib/tailor-actions";
-import { reviseDocument, saveDocumentVersion } from "@/lib/workspace-actions";
+import {
+  handoffToExtension,
+  reviseDocument,
+  saveDocumentVersion,
+} from "@/lib/workspace-actions";
 
 type Kind = "resume" | "cover_letter";
 
@@ -52,6 +56,7 @@ export function TailorWorkspace({
   const [instruction, setInstruction] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [handedOff, setHandedOff] = useState(false);
   const [isPending, startTransition] = useTransition();
   const generatedOnce = useRef(false);
 
@@ -135,6 +140,27 @@ export function TailorWorkspace({
     });
   }
 
+  // Open the real apply page and arm the Chrome extension with the current
+  // drafts (unsaved edits are snapshotted server-side). window.open must run
+  // synchronously in the click so popup blockers allow it.
+  function applyWithTailored() {
+    if (!jobUrl) return;
+    window.open(jobUrl, "_blank", "noopener,noreferrer");
+    setError(null);
+    startTransition(async () => {
+      const res = await handoffToExtension(
+        applicationId,
+        drafts.resume,
+        drafts.cover_letter
+      );
+      if (res.ok) {
+        setHandedOff(true);
+      } else {
+        setError(res.error);
+      }
+    });
+  }
+
   function saveVersion() {
     if (!dirty || isPending) return;
     setError(null);
@@ -187,17 +213,19 @@ export function TailorWorkspace({
             </Link>
           )}
           {jobUrl && (
-            <a
-              href={jobUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={btnSolid}
-            >
-              APPLY ON COMPANY SITE ↗
-            </a>
+            <button type="button" onClick={applyWithTailored} className={btnSolid}>
+              APPLY WITH TAILORED RÉSUMÉ ↗
+            </button>
           )}
         </div>
       </div>
+
+      {handedOff && (
+        <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-400">
+          [ SENT TO CHROME EXTENSION — AUTOFILL ON THE APPLY PAGE WILL USE THIS
+          RÉSUMÉ + COVER LETTER ]
+        </p>
+      )}
 
       {!hasResume && (
         <Link

@@ -62,6 +62,10 @@ export const userPreferences = pgTable("user_preferences", {
   location: text("location"),
   // One search phrase per entry — every provider is queried with each.
   searchQueries: jsonb("search_queries").$type<string[]>(),
+  // "Apply with tailored résumé" handoff: the extension autofills with this
+  // application's latest tailored documents until the handoff goes stale.
+  activeApplicationId: text("active_application_id"),
+  activeHandoffAt: timestamp("active_handoff_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

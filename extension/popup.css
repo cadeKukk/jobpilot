@@ -90,6 +90,30 @@ main {
   max-width: 200px;
 }
 
+.tailored {
+  border-color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tailored .k {
+  font: 600 9px ui-monospace, monospace;
+  letter-spacing: 0.18em;
+  color: var(--mid);
+}
+
+.tailored .job {
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.tailored .sub {
+  font-size: 11px;
+  color: var(--mid);
+  line-height: 1.4;
+}
+
 .status {
   display: flex;
   align-items: center;
