@@ -110,6 +110,27 @@ export async function chatJSON<T>(
   return extractJson(data.choices[0].message.content) as T;
 }
 
+export type ChatMessage = {
+  role: "system" | "user" | "assistant";
+  content: string;
+};
+
+// Plain conversational completion (used by the Pilot copilot chat).
+export async function chatText(
+  config: AIConfig,
+  messages: ChatMessage[]
+): Promise<string> {
+  const res = await chatRequest(config, { model: config.model, messages });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`AI request failed (${res.status}): ${body.slice(0, 300)}`);
+  }
+  const data = (await res.json()) as {
+    choices: Array<{ message: { content: string } }>;
+  };
+  return data.choices[0].message.content.trim();
+}
+
 export async function embedTexts(
   config: AIConfig,
   texts: string[]

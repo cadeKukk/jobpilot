@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Plus,
   Search,
+  Sparkles,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -27,6 +28,12 @@ const LINKS: {
     label: "Tracker",
     icon: LayoutDashboard,
     isActive: (path) => path === "/" || path.startsWith("/applications"),
+  },
+  {
+    href: "/pilot",
+    label: "Pilot",
+    icon: Sparkles,
+    isActive: (path) => path.startsWith("/pilot"),
   },
   {
     href: "/profile",
@@ -81,7 +88,7 @@ export function BottomNav() {
   ];
 
   return (
-    <div className="grid grid-cols-4">
+    <div className="grid grid-cols-5">
       {tabs.map(({ href, label, icon: Icon, isActive }) => {
         const active = isActive(pathname);
         return (

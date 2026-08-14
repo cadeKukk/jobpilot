@@ -18,7 +18,14 @@ approving every send.
 - **Job matching** — live postings pulled from job APIs (Remotive out of the
   box, Adzuna with free keys), ranked against your resume — semantic
   embedding scores with an OpenAI key, keyword scoring without — and saved
-  to the tracker in one click
+  to the tracker in one click, with Recommended/In-tracker tabs and
+  remote-only / past-week filters
+- **Pilot AI copilot** — a 24/7 career-coach chat grounded in your resume
+  and, when opened from a posting, that specific job: fit analysis,
+  interview prep, outreach drafts, gap advice
+- **Match breakdown & insider connections** — every job page shows your
+  match score, shared skills, missing keywords, and LinkedIn shortcuts to
+  recruiters, hiring managers, and peers at the company for referrals
 - **Email assistant** *(phase 4)* — drafts follow-ups and detects status
   changes from recruiter emails, with one-click approval
 - **Responsive UI** — sidebar navigation on desktop, bottom tabs on mobile,

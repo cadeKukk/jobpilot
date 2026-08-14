@@ -4,6 +4,22 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Pilot copilot, match breakdown, insider connections, feed tabs
+
+- **Pilot** (`/pilot`): an Orion-style 24/7 AI career-coach chat grounded
+  in the user's resume and preferences. Opened from a job page ("Ask
+  Pilot"), the posting is added to context with job-specific suggestion
+  chips (fit analysis, interview prep, gap closing, recruiter outreach).
+  Uses the provider-agnostic AI layer via a new `chatText` helper;
+  degrades gracefully without an AI key.
+- **Match breakdown on job pages**: an absolute match ring
+  (`scoreSingleJob`), shared skills, and a new "in the posting, not on
+  your resume" section (`missingKeywords`) highlighting gaps to address.
+- **Insider connections**: each job page links to LinkedIn people
+  searches for recruiters, hiring managers, and peers at the company.
+- **Jobs feed tabs & filters**: Recommended / In-tracker tabs plus
+  remote-only and past-week toggles that preserve the current search.
+
 ### Added — JobPilot Autofill Chrome extension
 
 - New Manifest V3 extension in `extension/`: autofills job application

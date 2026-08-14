@@ -322,6 +322,48 @@ export function sharedKeywords(resumeText: string, job: Job): string[] {
   return shared.slice(0, 14);
 }
 
+// Frequent job-posting terms missing from the resume — surfaced on the job
+// detail page as "skills to highlight or close".
+export function missingKeywords(resumeText: string, job: Job): string[] {
+  const resumeTerms = new Set(tokenize(resumeText));
+  const counts = new Map<string, number>();
+  for (const term of tokenize(`${job.title} ${job.description ?? ""}`)) {
+    if (term.length >= 4 && !resumeTerms.has(term)) {
+      counts.set(term, (counts.get(term) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .filter(([, n]) => n >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([term]) => term);
+}
+
+// Absolute match percentage for a single job (list scoring normalizes across
+// the result set, which is meaningless for one job).
+export async function scoreSingleJob(
+  resume: Resume,
+  job: Job
+): Promise<{ pct: number; method: ScoringMethod }> {
+  const ai = getAIConfig();
+  if (ai) {
+    try {
+      const scores = await embeddingScores(resume, [job]);
+      const cos = scores.get(job.id) ?? 0;
+      // Typical resume↔job cosine similarity lands in ~0.45–0.9.
+      const normalized = Math.min(1, Math.max(0, (cos - 0.45) / 0.45));
+      return {
+        pct: Math.round(35 + normalized * 60),
+        method: "embeddings",
+      };
+    } catch (err) {
+      console.error("Single-job embedding score failed:", err);
+    }
+  }
+  const raw = keywordScore(resume.content, job);
+  return { pct: Math.round(35 + raw * 60), method: "keywords" };
+}
+
 export type ScoringMethod = "embeddings" | "keywords";
 
 // Scores jobs against the resume: semantic embeddings when an OpenAI key is

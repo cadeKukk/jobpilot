@@ -10,7 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { db } from "@/db";
-import { applications, userPreferences, type Job } from "@/db/schema";
+import { applications, jobs, userPreferences, type Job } from "@/db/schema";
 import { CompanyAvatar } from "@/components/company-avatar";
 import { MatchRing } from "@/components/match-ring";
 import { SaveJobButton } from "@/components/save-job-button";
@@ -31,9 +31,18 @@ const inputClass =
 export default async function JobsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; loc?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    loc?: string;
+    tab?: string;
+    remote?: string;
+    fresh?: string;
+  }>;
 }) {
-  const { q, loc } = await searchParams;
+  const { q, loc, tab, remote, fresh } = await searchParams;
+  const savedTab = tab === "saved";
+  const remoteOnly = remote === "1";
+  const freshOnly = fresh === "1";
   const user = await getCurrentUser();
 
   const [prefs, masterResume] = await Promise.all([
@@ -49,7 +58,7 @@ export default async function JobsPage({
   // No saved search yet? Derive one from the resume so matches populate
   // automatically after onboarding, and remember it as the preference.
   let guessedFromResume = false;
-  if (!query && masterResume) {
+  if (!savedTab && !query && masterResume) {
     const guess = guessRoleFromResume(masterResume.content);
     if (guess) {
       query = guess;
@@ -90,23 +99,25 @@ export default async function JobsPage({
   let method: "embeddings" | "keywords" | null = null;
   let savedJobIds = new Set<string>();
 
-  if (query) {
+  if (savedTab) {
+    // Jobs already saved into the tracker.
+    const saved = await db.query.applications.findMany({
+      where: and(
+        eq(applications.userId, user.id),
+        isNotNull(applications.jobId)
+      ),
+      columns: { jobId: true },
+    });
+    savedJobIds = new Set(saved.map((s) => s.jobId as string));
+    if (savedJobIds.size > 0) {
+      results = await db.query.jobs.findMany({
+        where: inArray(jobs.id, [...savedJobIds]),
+      });
+    }
+  } else if (query) {
     const ingest = await searchAndIngestJobs(query, location);
     results = ingest.jobs;
     providerErrors = ingest.providerErrors;
-
-    if (masterResume && results.length > 0) {
-      const scored = await scoreJobsAgainstResume(masterResume, results);
-      percentages = scored.percentages;
-      method = scored.method;
-      results.sort(
-        (a, b) => (percentages.get(b.id) ?? 0) - (percentages.get(a.id) ?? 0)
-      );
-    } else {
-      results.sort(
-        (a, b) => (b.postedAt?.getTime() ?? 0) - (a.postedAt?.getTime() ?? 0)
-      );
-    }
 
     if (results.length > 0) {
       const saved = await db.query.applications.findMany({
@@ -124,6 +135,43 @@ export default async function JobsPage({
     }
   }
 
+  if (remoteOnly) {
+    results = results.filter((j) => /\bremote\b/i.test(j.location ?? ""));
+  }
+  if (freshOnly) {
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    results = results.filter((j) => (j.postedAt?.getTime() ?? 0) >= cutoff);
+  }
+
+  if (masterResume && results.length > 0) {
+    const scored = await scoreJobsAgainstResume(masterResume, results);
+    percentages = scored.percentages;
+    method = scored.method;
+    results.sort(
+      (a, b) => (percentages.get(b.id) ?? 0) - (percentages.get(a.id) ?? 0)
+    );
+  } else {
+    results.sort(
+      (a, b) => (b.postedAt?.getTime() ?? 0) - (a.postedAt?.getTime() ?? 0)
+    );
+  }
+
+  // Toggle links that keep the rest of the current search intact.
+  const buildUrl = (overrides: Record<string, string | null>) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (loc) params.set("loc", loc);
+    if (savedTab) params.set("tab", "saved");
+    if (remoteOnly) params.set("remote", "1");
+    if (freshOnly) params.set("fresh", "1");
+    for (const [key, value] of Object.entries(overrides)) {
+      if (value === null) params.delete(key);
+      else params.set(key, value);
+    }
+    const qs = params.toString();
+    return qs ? `/jobs?${qs}` : "/jobs";
+  };
+
   const adzunaConfigured =
     !!process.env.ADZUNA_APP_ID && !!process.env.ADZUNA_APP_KEY;
 
@@ -139,9 +187,31 @@ export default async function JobsPage({
         </p>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <TabLink href={buildUrl({ tab: null })} active={!savedTab}>
+          Recommended
+        </TabLink>
+        <TabLink href={buildUrl({ tab: "saved" })} active={savedTab}>
+          In tracker
+        </TabLink>
+        <span className="mx-1 h-5 w-px bg-slate-200" aria-hidden />
+        <ToggleChip
+          href={buildUrl({ remote: remoteOnly ? null : "1" })}
+          active={remoteOnly}
+        >
+          Remote only
+        </ToggleChip>
+        <ToggleChip
+          href={buildUrl({ fresh: freshOnly ? null : "1" })}
+          active={freshOnly}
+        >
+          Past week
+        </ToggleChip>
+      </div>
+
       <form
         action="/jobs"
-        className="flex flex-col gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row"
+        className={`flex flex-col gap-2.5 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row ${savedTab ? "hidden" : ""}`}
       >
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -176,7 +246,7 @@ export default async function JobsPage({
         </p>
       )}
 
-      {!masterResume && query && (
+      {!masterResume && query && !savedTab && (
         <Link
           href="/onboarding"
           className="block rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800 transition hover:border-blue-300"
@@ -202,13 +272,20 @@ export default async function JobsPage({
         </p>
       )}
 
-      {!query ? (
+      {savedTab && results.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center text-sm text-slate-500">
+          No saved jobs yet — save matches from the Recommended tab and
+          they&apos;ll show up here.
+        </div>
+      ) : !savedTab && !query ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center text-sm text-slate-500">
           Search for a role above to start finding matches.
         </div>
       ) : results.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white py-16 text-center text-sm text-slate-500">
-          No jobs found for “{query}”. Try broader keywords.
+          {remoteOnly || freshOnly
+            ? "No jobs match these filters — try removing one."
+            : `No jobs found for “${query}”. Try broader keywords.`}
         </div>
       ) : (
         <ul className="space-y-3">
@@ -326,6 +403,52 @@ export default async function JobsPage({
         </ul>
       )}
     </div>
+  );
+}
+
+function TabLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+        active
+          ? "bg-emerald-600 text-white"
+          : "bg-white text-slate-600 ring-1 ring-slate-200 hover:text-emerald-700"
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
+
+function ToggleChip({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+        active
+          ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-300"
+          : "bg-white text-slate-500 ring-1 ring-slate-200 hover:text-emerald-700"
+      }`}
+    >
+      {children}
+    </Link>
   );
 }
 
