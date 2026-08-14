@@ -45,26 +45,37 @@ export default async function DocumentPage({
     .trim();
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div className="flex items-center justify-between print:hidden">
+    <div className="mx-auto max-w-[8.5in] space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link
           href={`/applications/${doc.applicationId}`}
           className="font-mono text-[11px] tracking-[0.18em] text-neutral-500 hover-invert"
         >
           ← BACK TO APPLICATION
         </Link>
-        <PrintButton />
+        <span className="flex items-center gap-4">
+          <a
+            href={`/api/documents/${doc.id}/pdf`}
+            className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
+          >
+            DOWNLOAD PDF ↓
+          </a>
+          <PrintButton />
+        </span>
       </div>
 
-      {/* Rendered as a white "paper" artifact so it reads as a document
-          on the dark UI and prints black-on-white. */}
-      <div className="border border-neutral-50 bg-white p-8 print:border-0 print:p-0">
-        {/* On screen: title · date. In the printed PDF: just the date. */}
-        <p className="mb-5 flex items-baseline justify-between gap-4 font-mono text-[9px] tracking-[0.16em] text-neutral-400 print:mb-4 print:justify-end">
-          <span className="print:hidden">{title.toUpperCase()}</span>
-          <span>{formatDate(doc.createdAt).toUpperCase()}</span>
+      {/* Page chrome, not part of the document. */}
+      <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-500 print:hidden">
+        {title.toUpperCase()}
+      </p>
+
+      {/* True-to-output preview: a Letter-width page with the exact print
+          margins and type metrics, so the PDF looks identical. */}
+      <div className="w-[8.5in] max-w-full border border-neutral-50 bg-white px-[0.7in] py-[0.6in] print:w-auto print:border-0 print:p-0">
+        <p className="mb-4 text-right font-mono text-[9px] tracking-[0.16em] text-neutral-400">
+          {formatDate(doc.createdAt).toUpperCase()}
         </p>
-        <pre className="whitespace-pre-wrap font-sans text-[13px] leading-[1.45] text-neutral-950 print:text-[11px] print:leading-[1.35]">
+        <pre className="whitespace-pre-wrap font-sans text-[11px] leading-[1.35] text-neutral-950">
           {content}
         </pre>
       </div>

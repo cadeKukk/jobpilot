@@ -4,6 +4,22 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — One-click PDF downloads with a true-to-output preview
+
+- New `GET /api/documents/[id]/pdf`: headless Chrome renders the document
+  page in print media and streams a Letter-format PDF with a clean
+  filename ("Cade Kukk - Resume - {Company}.pdf").
+- **DOWNLOAD PDF ↓** in the tailoring workspace downloads the current
+  draft in one click — unsaved edits are snapshotted as a version first,
+  so the file always matches the editor. Also added on the document page
+  and next to each document on the application page.
+- The document preview now uses the exact output metrics — Letter width
+  (8.5in), real 0.6/0.7in margins, 11px/1.35 type — so the on-screen page
+  is pixel-identical to the PDF (verified by rendering both to images).
+  The title moved out of the paper into page chrome; the paper contains
+  only what prints (date + content).
+- Puppeteer promoted to a runtime dependency (`serverExternalPackages`).
+
 ### Added — Redo generation in the tailoring workspace
 
 - New **↺ REDO BOTH** button in the workspace toolbar regenerates the

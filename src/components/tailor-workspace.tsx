@@ -195,6 +195,35 @@ export function TailorWorkspace({
     });
   }
 
+  // One-click PDF: snapshot unsaved edits first so the file always matches
+  // the editor, then download the rendered PDF.
+  function downloadPdf() {
+    if (isPending || !draft.trim()) return;
+    setError(null);
+    startTransition(async () => {
+      let docId = latest?.id;
+      if (dirty) {
+        const res = await saveDocumentVersion(applicationId, tab, draft);
+        if (!res.ok) {
+          setError(res.error);
+          return;
+        }
+        docId = res.docId;
+        setVersions((v) => [
+          {
+            id: res.docId,
+            kind: tab,
+            content: draft,
+            model: "manual",
+            createdAt: new Date().toISOString(),
+          },
+          ...v,
+        ]);
+      }
+      if (docId) window.open(`/api/documents/${docId}/pdf`, "_blank");
+    });
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-neutral-50 py-3">
@@ -232,8 +261,19 @@ export function TailorWorkspace({
               target="_blank"
               className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert"
             >
-              PRINT / PDF ↗
+              PREVIEW ↗
             </Link>
+          )}
+          {(latest || draft.trim()) && (
+            <button
+              type="button"
+              onClick={downloadPdf}
+              disabled={isPending}
+              title="Downloads the current draft as a PDF (unsaved edits are saved as a version first)"
+              className="font-mono text-[11px] tracking-[0.14em] text-neutral-500 hover-invert disabled:opacity-40"
+            >
+              DOWNLOAD PDF ↓
+            </button>
           )}
           {jobUrl && (
             <button type="button" onClick={applyWithTailored} className={btnSolid}>

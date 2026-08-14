@@ -99,8 +99,15 @@ function DocumentPanel({ title, doc }: { title: string; doc: Doc }) {
             onClick={(e) => e.stopPropagation()}
             className="font-mono text-[10px] tracking-[0.14em] text-neutral-500 hover-invert"
           >
-            PRINT / PDF ↗
+            PREVIEW ↗
           </Link>
+          <a
+            href={`/api/documents/${doc.id}/pdf`}
+            onClick={(e) => e.stopPropagation()}
+            className="font-mono text-[10px] tracking-[0.14em] text-neutral-500 hover-invert"
+          >
+            PDF ↓
+          </a>
         </span>
       </summary>
       <pre className="max-h-96 overflow-y-auto whitespace-pre-wrap bg-neutral-900 px-4 py-3 font-sans text-sm leading-relaxed text-neutral-300">
