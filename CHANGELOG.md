@@ -4,6 +4,14 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Changed — Compact, professional PDF output
+
+- The document header now shows only the date (no "GENERATED" label or
+  title line), small and right-aligned, in print too.
+- Tighter print typography (11px / 1.35 line height), collapsed extra blank
+  lines and trailing whitespace, standard 0.6–0.7in page margins, and no
+  app padding on the printed page.
+
 ### Added — Tailoring workspace: APPLY → draft → iterate → apply
 
 - **New APPLY flow**: on a job page, APPLY now saves the job to the tracker

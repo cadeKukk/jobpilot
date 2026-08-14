@@ -35,3 +35,14 @@ body {
   background: var(--foreground);
   color: var(--background);
 }
+
+/* Professional print output: standard document margins, white page. */
+@media print {
+  @page {
+    margin: 0.6in 0.7in;
+  }
+
+  body {
+    background: #ffffff;
+  }
+}

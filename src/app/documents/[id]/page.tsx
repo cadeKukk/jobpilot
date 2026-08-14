@@ -30,10 +30,14 @@ export default async function DocumentPage({
   });
   if (!app) notFound();
 
-  const title =
-    doc.kind === "resume"
-      ? `Résumé — ${app.jobTitle} at ${app.company}`
-      : `Cover letter — ${app.jobTitle} at ${app.company}`;
+  // Compact, professional print output: collapse extra blank lines and
+  // trim trailing whitespace from each line.
+  const content = doc.content
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -50,12 +54,11 @@ export default async function DocumentPage({
       {/* Rendered as a white "paper" artifact so it reads as a document
           on the dark UI and prints black-on-white. */}
       <div className="border border-neutral-50 bg-white p-8 print:border-0 print:p-0">
-        <p className="mb-6 font-mono text-[10px] tracking-[0.16em] text-neutral-400 print:hidden">
-          {title.toUpperCase()} · GENERATED{" "}
+        <p className="mb-5 text-right font-mono text-[9px] tracking-[0.16em] text-neutral-400 print:mb-4">
           {formatDate(doc.createdAt).toUpperCase()}
         </p>
-        <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-neutral-950">
-          {doc.content}
+        <pre className="whitespace-pre-wrap font-sans text-[13px] leading-[1.45] text-neutral-950 print:text-[11px] print:leading-[1.35]">
+          {content}
         </pre>
       </div>
     </div>
