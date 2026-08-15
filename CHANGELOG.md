@@ -4,6 +4,24 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Real résumé typography with selectable style guides
+
+- Generated documents no longer render as a raw text dump. The plain-text
+  résumé is parsed (`parseResume`: name, contact line, ALL-CAPS sections,
+  "- " bullets, "Role | Company | dates" entries) and rendered with real
+  résumé typography: name header, ruled section headings, bold entries
+  with right-aligned dates, proper bullets.
+- **Four style guides** (picker on the document preview, persisted as the
+  default for all future previews/downloads via
+  `user_preferences.doc_style`): CLASSIC (serif, centered header), MODERN
+  (clean sans), COMPACT (dense sans), MONO (editorial monospace). The PDF
+  route accepts `?style=` and the preview forwards the active choice, so
+  the download always matches the preview.
+- All styles remain ATS-safe (real text layer, single column, standard
+  fonts) and inherit the one-page auto-fit (em-based sizing). Verified:
+  every style renders one page and extracts cleanly.
+- Cover letters render as dated letter paragraphs in the chosen typeface.
+
 ### Changed — ATS-compatible, guaranteed one-page output
 
 - **One page, always**: document content auto-fits a single Letter page —

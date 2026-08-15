@@ -66,6 +66,8 @@ export const userPreferences = pgTable("user_preferences", {
   // application's latest tailored documents until the handoff goes stale.
   activeApplicationId: text("active_application_id"),
   activeHandoffAt: timestamp("active_handoff_at", { withTimezone: true }),
+  // Default style guide for document output ("classic" | "modern" | ...).
+  docStyle: text("doc_style"),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

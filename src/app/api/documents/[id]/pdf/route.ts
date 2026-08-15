@@ -27,12 +27,16 @@ export async function GET(
   });
   if (!app) notFound();
 
-  const origin = new URL(request.url).origin;
+  const requestUrl = new URL(request.url);
+  const origin = requestUrl.origin;
+  const style = requestUrl.searchParams.get("style");
+  const pageUrl = `${origin}/documents/${id}${style ? `?style=${encodeURIComponent(style)}` : ""}`;
+
   const browser = await puppeteer.launch({ headless: true });
   let pdf: Uint8Array;
   try {
     const page = await browser.newPage();
-    await page.goto(`${origin}/documents/${id}`, {
+    await page.goto(pageUrl, {
       waitUntil: "networkidle0",
       timeout: 30_000,
     });
