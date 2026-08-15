@@ -147,7 +147,15 @@ export function DocumentRender({
       {parsed.sections.map((section, si) => (
         <section key={si} style={{ marginBottom: sectionGap(styleId) }}>
           {section.heading && (
-            <h2 style={{ ...s.headingStyle, margin: 0, ...(s.headingStyle.marginBottom ? { marginBottom: s.headingStyle.marginBottom } : {}) }}>
+            <h2
+              style={{
+                marginTop: 0,
+                marginRight: 0,
+                marginBottom: 0,
+                marginLeft: 0,
+                ...s.headingStyle,
+              }}
+            >
               {headingLabel(section.heading)}
             </h2>
           )}
