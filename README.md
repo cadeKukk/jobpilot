@@ -8,6 +8,8 @@ SDK, and an application tracker — all in a monochrome editorial UI matching
 Single-user by design: no accounts, no login. The app boots straight into
 the owner's workspace.
 
+![Job matches ranked by Fable 5 fit analysis](docs/screenshots/jobs.png)
+
 ## Features
 
 - **Multi-source job discovery** — every search phrase is run against
@@ -32,6 +34,43 @@ the owner's workspace.
   base résumé
 - **Editorial monochrome UI** — bracketed section markers, uppercase mono
   metadata, numbered lists, hairline rules; black on paper, no accent colors
+
+## Tour
+
+**1 · Discover** *(pictured above)*. Every search phrase runs against all
+four job sources. Analyzed postings carry an absolute Fable 5 fit score
+and a one-line verdict; the feed sorts by fit.
+
+**2 · Inspect.** A job page shows the full posting with the fit breakdown —
+score, verdict, strengths, and gaps — plus keyword overlap with the base
+résumé.
+
+![Job detail with Fable 5 fit analysis](docs/screenshots/job-detail.png)
+
+**3 · Tailor.** APPLY opens the tailoring workspace: Fable auto-drafts a
+tailored résumé + cover letter, live keyword coverage tracks the posting's
+terms as you edit, freeform instructions revise the draft, and every
+version is kept. APPLY WITH TAILORED RÉSUMÉ arms the Chrome extension and
+opens the company site.
+
+![Tailoring workspace with live keyword coverage and version history](docs/screenshots/workspace.png)
+
+**4 · Export.** The document preview is an exact Letter page — four
+selectable style guides, guaranteed one page, ATS-safe text — and the PDF
+downloads in one click, pixel-identical to the preview.
+
+![One-page ATS résumé preview with style guides](docs/screenshots/document.png)
+
+**5 · Track.** The tracker holds the whole pipeline (saved → applied →
+interviewing → offer) with an activity log per application.
+
+![Application tracker pipeline](docs/screenshots/tracker.png)
+
+**6 · Ask.** Pilot is a copilot chat grounded in the résumé, preferences,
+and any specific posting — interview prep, gap analysis, relocation
+strategy.
+
+![Pilot copilot chat](docs/screenshots/pilot.png)
 
 ## Stack
 

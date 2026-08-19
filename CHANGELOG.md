@@ -4,6 +4,13 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Docs — README screenshots
+
+- Added six screenshots (`docs/screenshots/`) and a numbered "Tour"
+  section walking the full workflow: discover → inspect → tailor →
+  export → track → ask Pilot. Hero shot of the fit-ranked job feed at
+  the top.
+
 ### Added — Real résumé typography with selectable style guides
 
 - Generated documents no longer render as a raw text dump. The plain-text
