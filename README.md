@@ -13,9 +13,11 @@ the owner's workspace.
 ## Features
 
 - **Multi-source job discovery** — every search phrase is run against
-  Remotive (remote, keyless), **cv.ee** (Estonia, keyless), **Arbeitnow**
-  (EU, keyless), and Adzuna (US on-site, free keys). Deduped, stored, and
-  filterable by Remote / Estonia / Past week
+  Remotive (remote, keyless), **RemoteOK** (remote, keyless), **cv.ee**
+  (Estonia, keyless), **Arbeitnow** (EU, keyless), Adzuna (US on-site, free
+  keys), and **JSearch** (Google for Jobs — LinkedIn / Indeed / Glassdoor
+  postings, free RapidAPI key). Deduped, stored, and filterable by
+  Remote / Estonia / Past week
 - **Fable 5 fit analysis** — the model reads the base résumé and each
   posting, then returns an *absolute* 0–100 fit score, a blunt one-line
   verdict, strengths, and gaps. Cached per job, batch-analyzed on demand
@@ -38,7 +40,7 @@ the owner's workspace.
 ## Tour
 
 **1 · Discover** *(pictured above)*. Every search phrase runs against all
-four job sources. Analyzed postings carry an absolute Fable 5 fit score
+six job sources. Analyzed postings carry an absolute Fable 5 fit score
 and a one-line verdict; the feed sorts by fit.
 
 **2 · Inspect.** A job page shows the full posting with the fit breakdown —
@@ -80,7 +82,7 @@ strategy.
 | Database | Postgres + Drizzle ORM (embedded PGlite locally, hosted Postgres via `DATABASE_URL`) |
 | AI | Cursor SDK (`@cursor/sdk`) running Anthropic **Fable 5** — fit analysis, tailoring, Pilot |
 | Parsing | unpdf for résumé PDF text extraction |
-| Job sources | Remotive · cv.ee · Arbeitnow · Adzuna (optional keys) |
+| Job sources | Remotive · RemoteOK · cv.ee · Arbeitnow · Adzuna (optional keys) · JSearch/Google for Jobs (optional key — LinkedIn, Indeed, Glassdoor) |
 
 ## Getting started
 
@@ -145,7 +147,7 @@ running; fit analysis, tailoring, and Pilot show setup instructions instead.
 
 - [x] Application tracker (CRUD, status pipeline, timeline, contacts)
 - [x] Base résumé onboarding (PDF upload/parse, LinkedIn paste)
-- [x] Multi-source matching engine (Remotive/cv.ee/Arbeitnow/Adzuna + Fable 5 fit analysis)
+- [x] Multi-source matching engine (Remotive/RemoteOK/cv.ee/Arbeitnow/Adzuna/JSearch + Fable 5 fit analysis)
 - [x] Résumé & cover letter tailoring (Cursor SDK, print-to-PDF)
 - [x] Pilot copilot, Chrome autofill extension
 - [x] Single-user personal build, editorial monochrome redesign

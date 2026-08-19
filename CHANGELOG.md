@@ -4,6 +4,18 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Two new job sources: RemoteOK + JSearch (LinkedIn/Indeed)
+
+- **RemoteOK** (keyless): remote tech jobs, filtered locally against each
+  search phrase like Arbeitnow. Live immediately — no setup.
+- **JSearch** (free RapidAPI key, `RAPIDAPI_KEY`): Google for Jobs results,
+  which is where LinkedIn, Indeed, Glassdoor, and ZipRecruiter postings
+  surface. Neither LinkedIn nor Indeed offers a public search API, so this
+  aggregator is the legitimate route to their listings. Descriptions are
+  prefixed with the originating board ("Listed on LinkedIn.").
+- Both providers run alongside the existing four in `searchAndIngestJobs`;
+  failures stay isolated per provider as before.
+
 ### Docs — README screenshots
 
 - Added six screenshots (`docs/screenshots/`) and a numbered "Tour"

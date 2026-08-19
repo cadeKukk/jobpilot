@@ -204,6 +204,114 @@ async function fetchArbeitnow(query: string): Promise<RawJob[]> {
     }));
 }
 
+// JSearch (RapidAPI): Google for Jobs results — this is where LinkedIn,
+// Indeed, Glassdoor, and ZipRecruiter postings surface, since none of those
+// boards offer a public search API. Free tier at rapidapi.com/jsearch.
+async function fetchJSearch(query: string, location: string): Promise<RawJob[]> {
+  const key = process.env.RAPIDAPI_KEY;
+  if (!key) return [];
+
+  const params = new URLSearchParams({
+    query: location ? `${query} in ${location}` : query,
+    page: "1",
+    num_pages: "1",
+  });
+  const res = await fetch(`https://jsearch.p.rapidapi.com/search?${params}`, {
+    headers: {
+      "x-rapidapi-key": key,
+      "x-rapidapi-host": "jsearch.p.rapidapi.com",
+    },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`JSearch responded ${res.status}`);
+  const data = (await res.json()) as {
+    data: Array<{
+      job_id: string;
+      job_title: string;
+      employer_name?: string;
+      job_publisher?: string;
+      job_city?: string;
+      job_state?: string;
+      job_country?: string;
+      job_is_remote?: boolean;
+      job_apply_link?: string;
+      job_description?: string;
+      job_min_salary?: number | null;
+      job_max_salary?: number | null;
+      job_posted_at_datetime_utc?: string | null;
+    }>;
+  };
+  return (data.data ?? []).map((j) => {
+    const place = [j.job_city, j.job_state, j.job_country]
+      .filter(Boolean)
+      .join(", ");
+    return {
+      source: "jsearch",
+      externalId: j.job_id,
+      title: j.job_title,
+      company: j.employer_name ?? "Unknown company",
+      location: j.job_is_remote
+        ? `${place || "Anywhere"} (Remote OK)`
+        : place || null,
+      url: j.job_apply_link ?? null,
+      description: j.job_description
+        ? `${j.job_publisher ? `Listed on ${j.job_publisher}.\n\n` : ""}${j.job_description}`.slice(
+            0,
+            MAX_DESCRIPTION_CHARS
+          )
+        : null,
+      salaryMin: j.job_min_salary ? Math.round(j.job_min_salary) : null,
+      salaryMax: j.job_max_salary ? Math.round(j.job_max_salary) : null,
+      postedAt: j.job_posted_at_datetime_utc
+        ? new Date(j.job_posted_at_datetime_utc)
+        : null,
+    };
+  });
+}
+
+// RemoteOK: free, no key, remote tech jobs. No server-side search — results
+// are filtered against the query locally (like Arbeitnow).
+async function fetchRemoteOk(query: string): Promise<RawJob[]> {
+  const res = await fetch("https://remoteok.com/api", {
+    headers: { "User-Agent": "JobPilot (personal job tracker)" },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+  });
+  if (!res.ok) throw new Error(`RemoteOK responded ${res.status}`);
+  const data = (await res.json()) as Array<{
+    id?: string | number;
+    position?: string;
+    company?: string;
+    location?: string;
+    url?: string;
+    description?: string;
+    salary_min?: number;
+    salary_max?: number;
+    date?: string;
+  }>;
+  const terms = tokenize(query);
+  return data
+    .filter((j) => j.id && j.position)
+    .filter((j) => {
+      const hay = `${j.position} ${j.description ?? ""}`.toLowerCase();
+      return terms.some((t) => hay.includes(t));
+    })
+    .slice(0, 25)
+    .map((j) => ({
+      source: "remoteok",
+      externalId: String(j.id),
+      title: j.position!,
+      company: j.company || "Unknown company",
+      location: j.location ? `Remote (${j.location})` : "Remote",
+      url: j.url ?? null,
+      description: j.description
+        ? stripHtml(j.description).slice(0, MAX_DESCRIPTION_CHARS)
+        : null,
+      salaryMin: j.salary_min || null,
+      salaryMax: j.salary_max || null,
+      postedAt: j.date ? new Date(j.date) : null,
+    }));
+}
+
 // --- Ingestion --------------------------------------------------------------
 
 export type IngestResult = {
@@ -222,6 +330,8 @@ export async function searchAndIngestJobs(
     fetchAdzuna(q, location),
     fetchCvEe(q),
     fetchArbeitnow(q),
+    fetchJSearch(q, location),
+    fetchRemoteOk(q),
   ]);
   const settled = await Promise.allSettled(tasks);
 
