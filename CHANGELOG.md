@@ -4,6 +4,26 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Added — Live deployment (Vercel + Neon)
+
+- Deployed to production: Vercel (project `jobpilot`) + Neon Postgres via
+  the Vercel Marketplace. Schema pushed with drizzle-kit; local data
+  copied up with the new `scripts/sync-to-prod.mjs` (idempotent —
+  `ON CONFLICT DO NOTHING`, safe to re-run to refresh the live site).
+- **Access gate** (`src/proxy.ts`, Next 16 proxy convention): when
+  `SITE_PASSWORD` is set, visitors need `/?key=<password>` once (sets a
+  30-day cookie, redirects to the clean URL). Protects the Cursor API key
+  from strangers, since the single-user build has no login. Local dev is
+  unaffected (no env var).
+- **Serverless PDF**: the PDF route now launches `puppeteer-core` +
+  `@sparticuz/chromium-min` on Vercel (Chromium pack downloaded to `/tmp`
+  on cold start; full Puppeteer bundling broke — Turbopack relocated the
+  binaries). Locally it still uses full Puppeteer. The route passes the
+  gate cookie to headless Chrome so it can render the preview page.
+- All pages marked `force-dynamic` (every route reads the DB — nothing
+  can prerender at build time) with `maxDuration: 60` for job ingestion
+  and Fable 5 calls.
+
 ### Added — Two new job sources: RemoteOK + JSearch (LinkedIn/Indeed)
 
 - **RemoteOK** (keyless): remote tech jobs, filtered locally against each

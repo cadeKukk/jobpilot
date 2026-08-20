@@ -4,6 +4,12 @@ import Link from "next/link";
 import { NavLinks } from "@/components/nav-links";
 import "./globals.css";
 
+// Every page reads the database (owner user, prefs, jobs) — never prerender
+// at build time.
+export const dynamic = "force-dynamic";
+// Job ingestion and Fable 5 calls (fit analysis, tailoring) can run long.
+export const maxDuration = 60;
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

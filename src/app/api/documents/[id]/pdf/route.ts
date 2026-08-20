@@ -1,9 +1,32 @@
 import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import puppeteer from "puppeteer";
 import { db } from "@/db";
 import { applications, generatedDocuments } from "@/db/schema";
 import { getCurrentUser } from "@/lib/user";
+
+// Headless Chrome can take a while to boot on a cold serverless invocation.
+export const maxDuration = 60;
+
+// Locally, full Puppeteer ships its own Chrome. On Vercel there's no system
+// browser, so puppeteer-core runs @sparticuz/chromium-min, which downloads
+// a serverless Chromium pack into /tmp on cold start (cached across warm
+// invocations). The pack version must match the installed package version.
+const CHROMIUM_PACK =
+  "https://github.com/Sparticuz/chromium/releases/download/v149.0.0/chromium-v149.0.0-pack.x64.tar";
+
+async function launchBrowser() {
+  if (process.env.VERCEL) {
+    const chromium = (await import("@sparticuz/chromium-min")).default;
+    const { launch } = await import("puppeteer-core");
+    return launch({
+      args: chromium.args,
+      executablePath: await chromium.executablePath(CHROMIUM_PACK),
+      headless: true,
+    });
+  }
+  const { launch } = await import("puppeteer");
+  return launch({ headless: true });
+}
 
 // One-click PDF download. Headless Chrome renders the same /documents/[id]
 // page in print media, so the file is pixel-identical to the on-screen
@@ -32,10 +55,19 @@ export async function GET(
   const style = requestUrl.searchParams.get("style");
   const pageUrl = `${origin}/documents/${id}${style ? `?style=${encodeURIComponent(style)}` : ""}`;
 
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await launchBrowser();
   let pdf: Uint8Array;
   try {
     const page = await browser.newPage();
+    // If the site is behind the SITE_PASSWORD gate, let headless Chrome in.
+    if (process.env.SITE_PASSWORD) {
+      await browser.setCookie({
+        name: "jp_access",
+        value: process.env.SITE_PASSWORD,
+        domain: requestUrl.hostname,
+        path: "/",
+      });
+    }
     await page.goto(pageUrl, {
       waitUntil: "networkidle0",
       timeout: 30_000,

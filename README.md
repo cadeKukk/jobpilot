@@ -121,7 +121,31 @@ running; fit analysis, tailoring, and Pilot show setup instructions instead.
 | Key | Unlocks |
 | --- | --- |
 | `ADZUNA_APP_ID` + `ADZUNA_APP_KEY` | US on-site/hybrid jobs (free at developer.adzuna.com) |
+| `RAPIDAPI_KEY` | JSearch — LinkedIn/Indeed/Glassdoor postings via Google for Jobs |
 | `OWNER_NAME` / `OWNER_EMAIL` | Owner identity (defaults to Cade Kukk) |
+| `SITE_PASSWORD` | Access gate for public deployments (visit `/?key=<password>` once) |
+
+## Deploying (Vercel + Neon)
+
+The live build runs on Vercel with a Neon Postgres (both free tier):
+
+```bash
+vercel link
+vercel install neon          # provisions Postgres, sets DATABASE_URL
+DATABASE_URL=<neon url> npx drizzle-kit push     # create tables
+DATABASE_URL=<neon url> node scripts/sync-to-prod.mjs  # copy local data up
+vercel env add CURSOR_API_KEY production
+vercel env add SITE_PASSWORD production          # optional access gate
+vercel deploy --prod
+```
+
+Serverless notes, already handled in the repo: every page is
+`force-dynamic` (no DB access at build time), and the PDF route swaps
+full Puppeteer for `puppeteer-core` + `@sparticuz/chromium-min` on Vercel
+(downloads a Chromium pack to `/tmp` on cold start). Because the app has
+no login, `SITE_PASSWORD` gates the whole site behind a shareable
+`/?key=...` link — without it, anyone with the URL can run AI actions on
+your Cursor key. Re-run `sync-to-prod.mjs` any time to push local data live.
 
 ## How matching works
 
