@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
     "puppeteer-core",
     "@sparticuz/chromium-min",
   ],
+  // Client router cache: reuse a visited page for 30s when navigating back
+  // to it (default is 0 for dynamic pages — every menu click re-rendered the
+  // whole page on the server, which felt laggy).
+  experimental: {
+    staleTimes: { dynamic: 30 },
+  },
 };
 
 export default nextConfig;

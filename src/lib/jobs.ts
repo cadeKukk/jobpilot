@@ -381,20 +381,46 @@ function tokenize(text: string): string[] {
   );
 }
 
-export function keywordScore(resumeText: string, job: Job): number {
+// Does a stored job plausibly match one of the user's search phrases?
+// Used by the cached feed path to reproduce (approximately) what a live
+// provider search would return, without hitting the network. A job matches a
+// phrase when its title contains any phrase term, or its full text contains
+// all of them.
+export function jobMatchesQueries(job: Job, queries: string[]): boolean {
+  const title = job.title.toLowerCase();
+  const full = `${title} ${(job.description ?? "").toLowerCase()}`;
+  return queries.some((query) => {
+    const terms = tokenize(query);
+    if (terms.length === 0) return false;
+    return (
+      terms.some((t) => title.includes(t)) || terms.every((t) => full.includes(t))
+    );
+  });
+}
+
+// Builds a scorer with the résumé tokenized ONCE — scoring hundreds of feed
+// jobs used to re-tokenize the full résumé per job, which was the main CPU
+// cost of rendering /jobs. Descriptions are capped for scoring; keyword
+// density in the first part of a posting is representative.
+export function createKeywordScorer(resumeText: string): (job: Job) => number {
   const resumeTerms = new Set(tokenize(resumeText));
-  const jobTerms = new Set(tokenize(`${job.title} ${job.description ?? ""}`));
-  if (jobTerms.size === 0) return 0;
 
-  let matched = 0;
-  for (const term of jobTerms) if (resumeTerms.has(term)) matched++;
+  return (job: Job) => {
+    const jobTerms = new Set(
+      tokenize(`${job.title} ${(job.description ?? "").slice(0, 3_000)}`)
+    );
+    if (jobTerms.size === 0) return 0;
 
-  const titleTerms = tokenize(job.title);
-  const titleMatched = titleTerms.filter((t) => resumeTerms.has(t)).length;
-  const titleBonus =
-    titleTerms.length > 0 ? (titleMatched / titleTerms.length) * 0.35 : 0;
+    let matched = 0;
+    for (const term of jobTerms) if (resumeTerms.has(term)) matched++;
 
-  return Math.min(1, matched / Math.min(jobTerms.size, 60) + titleBonus);
+    const titleTerms = tokenize(job.title);
+    const titleMatched = titleTerms.filter((t) => resumeTerms.has(t)).length;
+    const titleBonus =
+      titleTerms.length > 0 ? (titleMatched / titleTerms.length) * 0.35 : 0;
+
+    return Math.min(1, matched / Math.min(jobTerms.size, 60) + titleBonus);
+  };
 }
 
 // Skills/terms a job shares with the resume.

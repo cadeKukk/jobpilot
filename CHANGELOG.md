@@ -4,6 +4,24 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Fixed — Navigation lag (jobs feed cache + loading skeletons)
+
+- **The /jobs page no longer hits six external job boards on every visit**
+  (~1–2s each time — the main source of menu lag). The recommended feed is
+  now served from the DB while fresh and re-ingested only when 30 minutes
+  old, when search phrases change, on a one-off search, or via the new
+  "REFRESH NOW ↻" control (which shows when the feed was last refreshed).
+  Cache marker lives in `user_preferences.jobs_refreshed_at/jobs_queries_key`.
+- **Route loading skeletons** (`loading.tsx` for the app root and a
+  feed-shaped one for /jobs): navigation now responds instantly with a
+  skeleton instead of freezing on the previous page.
+- **Client router cache** (`staleTimes.dynamic: 30`): navigating back to a
+  recently visited page reuses it instead of a full server round-trip.
+- Perf details: keyword scorer now tokenizes the résumé once per request
+  instead of once per job (`createKeywordScorer`), scoring caps descriptions
+  at 3k chars, and the feed renders the top 60 ranked cards (with a
+  "showing top N" note). Cached /jobs render: ~1.2s → ~0.13s.
+
 ### Added — Live deployment (Vercel + Neon)
 
 - Deployed to production: Vercel (project `jobpilot`) + Neon Postgres via

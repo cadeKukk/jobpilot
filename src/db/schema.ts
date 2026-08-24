@@ -68,6 +68,11 @@ export const userPreferences = pgTable("user_preferences", {
   activeHandoffAt: timestamp("active_handoff_at", { withTimezone: true }),
   // Default style guide for document output ("classic" | "modern" | ...).
   docStyle: text("doc_style"),
+  // Job-feed cache marker: when the recommended feed was last ingested from
+  // the external boards, and for which search-phrase set. Fresh feed = serve
+  // straight from the DB (fast) instead of re-querying six providers.
+  jobsRefreshedAt: timestamp("jobs_refreshed_at", { withTimezone: true }),
+  jobsQueriesKey: text("jobs_queries_key"),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

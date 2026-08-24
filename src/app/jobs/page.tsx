@@ -1,12 +1,16 @@
 import Link from "next/link";
-import { and, eq, inArray, isNotNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import { applications, jobs, userPreferences, type Job } from "@/db/schema";
 import { AnalyzeButton } from "@/components/analyze-button";
 import { btnSolid, MonoLabel, SectionMark, inputBase } from "@/components/editorial";
 import { SaveJobButton } from "@/components/save-job-button";
 import { cursorEnabled } from "@/lib/cursor-ai";
-import { keywordScore, searchAndIngestJobs } from "@/lib/jobs";
+import {
+  createKeywordScorer,
+  jobMatchesQueries,
+  searchAndIngestJobs,
+} from "@/lib/jobs";
 import { getMasterResume } from "@/lib/resume";
 import { formatDate, formatJobSalary } from "@/lib/status";
 import { getCurrentUser } from "@/lib/user";
@@ -14,6 +18,18 @@ import { getCurrentUser } from "@/lib/user";
 export const metadata = { title: "Jobs · JobPilot" };
 
 const DEFAULT_QUERIES = ["software engineer", "AI engineer", "IT specialist"];
+
+// How long the recommended feed is served from the DB before the external
+// boards are queried again. Keeps navigation snappy — a live ingest takes
+// ~1s+, a cached read ~30ms. REFRESH NOW bypasses it.
+const FEED_TTL_MS = 30 * 60 * 1000;
+
+function minutesAgoLabel(at: Date): string {
+  const mins = Math.round((Date.now() - at.getTime()) / 60_000);
+  if (mins < 1) return "JUST NOW";
+  if (mins === 1) return "1 MIN AGO";
+  return `${mins} MINS AGO`;
+}
 
 export default async function JobsPage({
   searchParams,
@@ -24,9 +40,10 @@ export default async function JobsPage({
     remote?: string;
     ee?: string;
     fresh?: string;
+    refresh?: string;
   }>;
 }) {
-  const { q, tab, remote, ee, fresh } = await searchParams;
+  const { q, tab, remote, ee, fresh, refresh } = await searchParams;
   const savedTab = tab === "saved";
   const remoteOnly = remote === "1";
   const estoniaOnly = ee === "1";
@@ -54,6 +71,7 @@ export default async function JobsPage({
   let results: Job[] = [];
   let providerErrors: string[] = [];
   let savedJobIds = new Set<string>();
+  let feedRefreshedAt: Date | null = null;
 
   if (savedTab) {
     const saved = await db.query.applications.findMany({
@@ -70,12 +88,50 @@ export default async function JobsPage({
       });
     }
   } else {
-    const ingest = await searchAndIngestJobs(
-      queries,
-      prefs?.location ?? ""
-    );
-    results = ingest.jobs;
-    providerErrors = ingest.providerErrors;
+    // The live ingest (six providers × every phrase) takes ~1s+, which made
+    // every visit to this page lag. Serve the feed from the DB while it's
+    // fresh; hit the boards only when stale, when the search phrases changed,
+    // on an explicit one-off search, or on REFRESH NOW.
+    const queriesKey = queries.join(" | ").toLowerCase();
+    const isExplicitSearch = Boolean(q?.trim());
+    const feedIsFresh =
+      !isExplicitSearch &&
+      refresh !== "1" &&
+      prefs?.jobsRefreshedAt != null &&
+      prefs.jobsQueriesKey === queriesKey &&
+      Date.now() - prefs.jobsRefreshedAt.getTime() < FEED_TTL_MS;
+
+    if (feedIsFresh) {
+      const recent = await db.query.jobs.findMany({
+        orderBy: [desc(jobs.createdAt)],
+        limit: 800,
+      });
+      results = recent.filter((j) => jobMatchesQueries(j, queries));
+      feedRefreshedAt = prefs!.jobsRefreshedAt!;
+    } else {
+      const ingest = await searchAndIngestJobs(queries, prefs?.location ?? "");
+      results = ingest.jobs;
+      providerErrors = ingest.providerErrors;
+
+      if (!isExplicitSearch) {
+        feedRefreshedAt = new Date();
+        await db
+          .insert(userPreferences)
+          .values({
+            userId: user.id,
+            jobsRefreshedAt: feedRefreshedAt,
+            jobsQueriesKey: queriesKey,
+          })
+          .onConflictDoUpdate({
+            target: userPreferences.userId,
+            set: {
+              jobsRefreshedAt: feedRefreshedAt,
+              jobsQueriesKey: queriesKey,
+              updatedAt: new Date(),
+            },
+          });
+      }
+    }
 
     if (results.length > 0) {
       const saved = await db.query.applications.findMany({
@@ -106,7 +162,8 @@ export default async function JobsPage({
   // by keyword overlap (retrieval order).
   const kw = new Map<string, number>();
   if (masterResume) {
-    for (const j of results) kw.set(j.id, keywordScore(masterResume.content, j));
+    const score = createKeywordScorer(masterResume.content);
+    for (const j of results) kw.set(j.id, score(j));
   }
   results.sort((a, b) => {
     const aScore = a.fitScore ?? -1;
@@ -114,6 +171,10 @@ export default async function JobsPage({
     if (aScore !== bScore) return bScore - aScore;
     return (kw.get(b.id) ?? 0) - (kw.get(a.id) ?? 0);
   });
+
+  // Render only the best of the ranked feed — server-rendering hundreds of
+  // cards was a real chunk of the page time, and nobody scrolls past 60.
+  const visible = results.slice(0, 60);
 
   // Next batch for Fable analysis: best unanalyzed candidates by keywords.
   const unanalyzed = results
@@ -146,8 +207,16 @@ export default async function JobsPage({
         <p className="max-w-xl text-sm text-neutral-400">
           {savedTab
             ? "Postings you've saved into the tracker."
-            : `Live postings from ${estoniaOnly ? "cv.ee" : "Remotive, cv.ee (Estonia), Arbeitnow (EU)" + (process.env.ADZUNA_APP_ID ? ", Adzuna" : "")} for: ${queries.join(" · ")}`}
+            : `Postings from six job boards for: ${queries.join(" · ")}`}
         </p>
+        {!savedTab && feedRefreshedAt && (
+          <p className="font-mono text-[10px] tracking-[0.16em] text-neutral-500">
+            FEED REFRESHED {minutesAgoLabel(feedRefreshedAt)}{" "}
+            <Link href={buildUrl({ refresh: "1" })} className="hover-invert">
+              · REFRESH NOW ↻
+            </Link>
+          </p>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-neutral-50 py-3">
@@ -239,7 +308,7 @@ export default async function JobsPage({
         </div>
       ) : (
         <ol className="border-t border-neutral-50">
-          {results.map((job, i) => (
+          {visible.map((job, i) => (
             <li
               key={job.id}
               className="group border-b border-neutral-800 py-5 transition hover:bg-neutral-900"
@@ -319,6 +388,13 @@ export default async function JobsPage({
             </li>
           ))}
         </ol>
+      )}
+
+      {results.length > visible.length && (
+        <p className="font-mono text-[10px] tracking-[0.18em] text-neutral-500">
+          SHOWING TOP {visible.length} OF {results.length} — NARROW WITH
+          FILTERS OR A ONE-OFF SEARCH
+        </p>
       )}
     </div>
   );
