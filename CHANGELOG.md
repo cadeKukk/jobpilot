@@ -4,6 +4,16 @@ All notable changes to JobPilot are documented here.
 
 ## Unreleased
 
+### Docs — Setup order, architecture diagram, full env and scripts list
+
+- Getting started now runs `npm run db:push` from a second terminal while
+  `npm run dev` is up (the schema push needs the local database listening).
+- README adds a Mermaid diagram of how the pages, server actions, extension
+  API, job boards, Cursor SDK and PDF route connect, and lists every npm
+  script.
+- `.env.example` documents `SITE_PASSWORD` and `PGLITE_PORT`, which the code
+  reads but the example didn't list.
+
 ### Fixed — Navigation lag (jobs feed cache + loading skeletons)
 
 - **The /jobs page no longer hits six external job boards on every visit**

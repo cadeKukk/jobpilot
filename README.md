@@ -89,8 +89,13 @@ strategy.
 ```bash
 npm install
 cp .env.example .env   # then paste your CURSOR_API_KEY
-npm run db:push        # create tables (dev database must be running)
-npm run dev
+npm run dev            # starts the local database and the app
+```
+
+With `npm run dev` still running, create the tables from a second terminal:
+
+```bash
+npm run db:push
 ```
 
 Open [http://localhost:3000](http://localhost:3000) — the owner user is
@@ -147,6 +152,41 @@ no login, `SITE_PASSWORD` gates the whole site behind a shareable
 `/?key=...` link — without it, anyone with the URL can run AI actions on
 your Cursor key. Re-run `sync-to-prod.mjs` any time to push local data live.
 
+## How it fits together
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    UI["Next.js pages<br/>jobs · tailor · tracker · Pilot"]
+    EXT["Chrome extension<br/>JobPilot Autofill"]
+  end
+  subgraph Server["Next.js server"]
+    ACT["Server actions<br/>src/lib/*-actions.ts"]
+    API["/api/extension/*<br/>/api/documents/[id]/pdf"]
+    AI["src/lib/cursor-ai.ts"]
+    JOBS["src/lib/jobs.ts"]
+  end
+  DB[("Postgres<br/>PGlite locally, Neon on Vercel")]
+  SRC["Job boards<br/>Remotive · RemoteOK · cv.ee<br/>Arbeitnow · Adzuna · JSearch"]
+  CUR["Cursor SDK<br/>Fable 5"]
+  PDF["Headless Chromium"]
+
+  UI --> ACT
+  EXT --> API
+  ACT --> DB
+  API --> DB
+  ACT --> JOBS --> SRC
+  ACT --> AI --> CUR
+  API --> PDF -->|"loads /documents/[id]"| UI
+```
+
+Pages call server actions, which read and write Postgres through Drizzle.
+Job searches fan out to the boards in `src/lib/jobs.ts`; fit analysis,
+tailoring and Pilot go through `src/lib/cursor-ai.ts`. The Chrome extension
+talks to the local app at `localhost:3000` through `/api/extension/*`, and
+the PDF route opens the document preview page in headless Chromium and
+prints it.
+
 ## How matching works
 
 1. **Retrieval** — each search phrase (Profile page, one per line) is run
@@ -163,9 +203,12 @@ your Cursor key. Re-run `sync-to-prod.mjs` any time to push local data live.
 | Command | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server (+ local database) |
+| `npm run db:server` | Start only the local PGlite database on `127.0.0.1:5433` |
 | `npm run db:push` | Apply the Drizzle schema to the database |
 | `npm run db:seed` | Create the owner user |
 | `npm run db:studio` | Browse the database in Drizzle Studio |
+| `npm run build` / `npm start` | Production build and server |
+| `npm run lint` | Run ESLint |
 
 ## Roadmap
 
